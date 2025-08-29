@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+iced = { version = "0.12", features = ["image", "svg", "canvas", "debug", "tokio", "system"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rfd = "0.12" # For file dialogs
+async-std = "1.12" # For async operations, alternative to tokio
+directories = "5.0" # For application data directory
+uuid = { version = "1.8", features = ["v4", "fast-rng", "serde"] } # For generating file IDs
+chrono = { version = "0.4", features = ["serde"] } # For timestamps
+futures = "0.3" # For async utilities
+native-dialog = "0.7" # For more native dialogs
