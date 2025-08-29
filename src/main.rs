@@ -1,5 +1,5 @@
 use iced::{
-    Application, Command, Element, Settings, Theme,
+    Application, Command, Element, Font, Settings, Theme
 };
 
 mod data;
@@ -87,7 +87,8 @@ impl Application for WalrusStore {
 
 pub fn main() -> iced::Result {
     get_data_dir();
-
-    WalrusStore::run(Settings::default())
+    let mut config = Settings::default();
+    config.default_font = Font::with_name("微软雅黑");
+    WalrusStore::run(config)
 }
 
