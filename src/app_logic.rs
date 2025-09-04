@@ -1,13 +1,13 @@
-use iced::{Command, Element};
-use std::path::PathBuf;
 use directories::UserDirs;
+use iced::{Command, Element};
 use rfd::AsyncFileDialog;
+use std::path::PathBuf;
 
-use crate::data::FileEntry;
-use crate::file_management::{save_file_entries};
-use crate::mock_api::MockApi;
+use crate::Message;
 use crate::WalrusStore; // 需要引入 WalrusStore 结构体
-use crate::Message; // 需要引入 Message 枚举
+use crate::data::FileEntry;
+use crate::file_management::save_file_entries;
+use crate::mock_api::MockApi; // 需要引入 Message 枚举
 
 pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<Message> {
     match message {
@@ -15,22 +15,20 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             app_state.files = files;
             Command::none()
         }
-        Message::TriggerFileSelection => {
-            Command::perform(
-                async {
-                    let initial_directory = UserDirs::new()
-                        .and_then(|user_dirs| Some(user_dirs.home_dir().to_path_buf()))
-                        .unwrap_or_else(|| PathBuf::from("."));
+        Message::TriggerFileSelection => Command::perform(
+            async {
+                let initial_directory = UserDirs::new()
+                    .and_then(|user_dirs| Some(user_dirs.home_dir().to_path_buf()))
+                    .unwrap_or_else(|| PathBuf::from("."));
 
-                    let pick_result = AsyncFileDialog::new()
-                        .set_directory(initial_directory)
-                        .pick_file()
-                        .await;
-                    Message::FileSelected(pick_result.map(|handle| handle.path().to_path_buf()))
-                },
-                |msg| msg,
-            )
-        }
+                let pick_result = AsyncFileDialog::new()
+                    .set_directory(initial_directory)
+                    .pick_file()
+                    .await;
+                Message::FileSelected(pick_result.map(|handle| handle.path().to_path_buf()))
+            },
+            |msg| msg,
+        ),
         Message::FileSelected(path_opt) => {
             if let Some(path) = path_opt {
                 app_state.upload_file_path = path.to_string_lossy().into_owned();
@@ -47,7 +45,8 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 return Command::none();
             }
             let file_path = PathBuf::from(&app_state.upload_file_path);
-            let file_name = file_path.file_name()
+            let file_name = file_path
+                .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
                 .into_owned();
@@ -57,11 +56,9 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
 
             Command::perform(
                 async { MockApi::upload_file(file_path).await },
-                move |result| {
-                    match result {
-                        Ok(id) => Message::UploadComplete(Ok(FileEntry::new(file_name.clone()))),
-                        Err(e) => Message::UploadComplete(Err(e)),
-                    }
+                move |result| match result {
+                    Ok(id) => Message::UploadComplete(Ok(FileEntry::new(file_name.clone()))),
+                    Err(e) => Message::UploadComplete(Err(e)),
                 },
             )
         }
@@ -79,7 +76,11 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             }
         }
         Message::DeleteButtonPressed(id) => {
-            let file_name = app_state.files.iter().find(|f| f.id == id).map(|f| f.name.clone());
+            let file_name = app_state
+                .files
+                .iter()
+                .find(|f| f.id == id)
+                .map(|f| f.name.clone());
             if let Some(name) = file_name {
                 app_state.status_message = format!("正在删除 {}...", name);
                 Command::perform(
@@ -101,10 +102,15 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 return Command::none();
             }
             let id_to_download = app_state.download_id_input.clone();
-            let file_entry = app_state.files.iter().find(|f| f.id == id_to_download).cloned();
+            let file_entry = app_state
+                .files
+                .iter()
+                .find(|f| f.id == id_to_download)
+                .cloned();
 
             if let Some(entry) = file_entry {
-                app_state.status_message = format!("正在下载 {} (ID: {})...", entry.name, id_to_download);
+                app_state.status_message =
+                    format!("正在下载 {} (ID: {})...", entry.name, id_to_download);
                 Command::perform(
                     async move { MockApi::download_file(entry.id.clone(), entry.name.clone()).await },
                     |result| Message::DownloadComplete(result),

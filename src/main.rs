@@ -1,23 +1,22 @@
-#![windows_subsystem = "windows"] 
+#![windows_subsystem = "windows"]
 
-use iced::{
-    Application, Command, Element, Font, Settings, Theme
-};
+use iced::{Application, Command, Element, Font, Settings, Theme};
 
+mod app_logic; // Add this line
 mod data;
 mod file_management;
 mod mock_api;
 mod ui;
-mod app_logic; // Add this line
+mod walrus_api;
 
-use file_management::get_data_dir;
-use app_logic::handle_message; // Add this line
 use crate::data::FileEntry;
 use crate::file_management::{load_file_entries, save_file_entries};
 use crate::mock_api::MockApi;
 use crate::ui::view_application;
-use std::path::PathBuf;
+use app_logic::handle_message; // Add this line
 use async_std::sync::Mutex;
+use file_management::get_data_dir;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 // 定义应用程序的状态
@@ -69,7 +68,7 @@ impl Application for WalrusStore {
     }
 
     fn title(&self) -> String {
-        String::from("我的网盘应用")
+        String::from("walrus云盘")
     }
 
     fn update(&mut self, message: Message) -> Command<Message> {
@@ -93,4 +92,3 @@ pub fn main() -> iced::Result {
     config.default_font = Font::with_name("微软雅黑");
     WalrusStore::run(config)
 }
-

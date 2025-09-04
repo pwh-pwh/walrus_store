@@ -1,10 +1,7 @@
-use std::{
-    fs,
-    path::PathBuf,
-};
-use directories::ProjectDirs;
 use crate::data::FileEntry;
+use directories::ProjectDirs;
 use std::env;
+use std::{fs, path::PathBuf};
 
 pub fn get_data_dir() -> PathBuf {
     if let Some(proj_dirs) = ProjectDirs::from("com", "kilocode", "WalrusStore") {
@@ -50,7 +47,7 @@ pub fn save_file_entries(entries: &[FileEntry]) {
     match serde_json::to_string_pretty(entries) {
         Ok(json) => {
             fs::write(&path, json).expect("无法写入 files.json");
-        },
+        }
         Err(e) => {
             eprintln!("序列化文件列表失败: {}", e);
         }

@@ -1,6 +1,6 @@
-use std::{path::PathBuf, fs};
-use uuid::Uuid;
 use crate::file_management::get_data_dir;
+use std::{fs, path::PathBuf};
+use uuid::Uuid;
 
 pub struct MockApi;
 
@@ -8,8 +8,16 @@ impl MockApi {
     pub async fn upload_file(file_path: PathBuf) -> Result<String, String> {
         println!("模拟上传文件: {:?}", file_path.display());
         async_std::task::sleep(std::time::Duration::from_secs(2)).await; // 模拟网络延迟
-        if file_path.file_name().unwrap_or_default().to_string_lossy().contains("error") {
-            Err(format!("上传失败：模拟错误发生在文件: {}", file_path.display()))
+        if file_path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .contains("error")
+        {
+            Err(format!(
+                "上传失败：模拟错误发生在文件: {}",
+                file_path.display()
+            ))
         } else {
             Ok(Uuid::new_v4().to_string())
         }
@@ -24,8 +32,11 @@ impl MockApi {
             let download_dir = get_data_dir().join("downloads");
             fs::create_dir_all(&download_dir).map_err(|e| format!("无法创建下载目录: {}", e))?;
             let download_path = download_dir.join(&file_name);
-            fs::write(&download_path, format!("This is content for file ID: {}", file_id))
-                .map_err(|e| format!("无法写入下载文件: {}", e))?;
+            fs::write(
+                &download_path,
+                format!("This is content for file ID: {}", file_id),
+            )
+            .map_err(|e| format!("无法写入下载文件: {}", e))?;
             Ok(download_path.to_string_lossy().into_owned())
         }
     }

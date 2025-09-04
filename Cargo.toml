@@ -14,3 +14,4 @@ uuid = { version = "1.8", features = ["v4", "fast-rng", "serde"] } # For generat
 chrono = { version = "0.4", features = ["serde"] } # For timestamps
 futures = "0.3" # For async utilities
 native-dialog = "0.7" # For more native dialogs
+walrus_rs = "0.1.2"

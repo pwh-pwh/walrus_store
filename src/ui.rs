@@ -1,9 +1,7 @@
-use iced::{Element, Length};
-use iced::widget::{
-    button, column, container, row, scrollable, text, text_input, Space,
-};
-use crate::data::FileEntry;
 use crate::Message;
+use crate::data::FileEntry;
+use iced::widget::{Space, button, column, container, row, scrollable, text, text_input};
+use iced::{Element, Length};
 
 pub fn view_application<'a>(
     files: &'a Vec<FileEntry>,
@@ -69,20 +67,14 @@ pub fn view_application<'a>(
         })
         .collect();
 
-    let file_list_scrollable = scrollable(
-        column(file_list_items).spacing(5)
-    )
-    .width(Length::Fill)
-    .height(Length::FillPortion(3));
+    let file_list_scrollable = scrollable(column(file_list_items).spacing(5))
+        .width(Length::Fill)
+        .height(Length::FillPortion(3));
 
-    let file_list_area = column![
-        file_list_header,
-        file_list_scrollable,
-    ]
-    .spacing(10)
-    .padding(10)
-    .width(Length::Fill);
-
+    let file_list_area = column![file_list_header, file_list_scrollable,]
+        .spacing(10)
+        .padding(10)
+        .width(Length::Fill);
 
     // 下载区域
     let download_area = column![
@@ -106,7 +98,6 @@ pub fn view_application<'a>(
     .width(Length::Fill)
     .padding(5)
     .center_x();
-
 
     column![
         title_bar,
