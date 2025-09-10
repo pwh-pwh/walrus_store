@@ -7,7 +7,7 @@ use crate::Message;
 use crate::WalrusStore; // 需要引入 WalrusStore 结构体
 use crate::data::FileEntry;
 use crate::file_management::save_file_entries;
-use crate::mock_api::MockApi; // 需要引入 Message 枚举
+use crate::walrus_api::WalrusApi; // 引入 WalrusApi
 
 pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<Message> {
     match message {
@@ -53,9 +53,10 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
 
             app_state.status_message = format!("正在上传 {}...", file_name);
             app_state.upload_progress = 0.0;
-
+ 
+            let walrus_api = WalrusApi::default(); // 创建 WalrusApi 实例
             Command::perform(
-                async { MockApi::upload_file(file_path).await },
+                async move { walrus_api.upload_file(file_path).await },
                 move |result| match result {
                     Ok(id) => Message::UploadComplete(Ok(FileEntry::new(file_name.clone()))),
                     Err(e) => Message::UploadComplete(Err(e)),
@@ -87,8 +88,9 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 let file_entry = app_state.files.iter().find(|f| f.id == id).cloned();
                 if let Some(entry) = file_entry {
                     app_state.status_message = format!("正在下载 {} 到 {}...", entry.name, download_path.to_string_lossy());
+                    let walrus_api = WalrusApi::default(); // 创建 WalrusApi 实例
                     Command::perform(
-                        async move { MockApi::download_file(entry.id.clone(), entry.name.clone(), download_path).await },
+                        async move { walrus_api.download_file(entry.id.clone(), entry.name.clone(), download_path).await },
                         |result| Message::DownloadComplete(result),
                     )
                 } else {
@@ -107,11 +109,11 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 .find(|f| f.id == id)
                 .map(|f| f.name.clone());
             if let Some(name) = file_name {
-                app_state.status_message = format!("正在删除 {}...", name);
-                Command::perform(
-                    async move { MockApi::delete_file(id.clone()).await },
-                    |result| Message::DeleteComplete(result.map(|_id| _id)),
-                )
+                // 用户要求delete file不用处理，只需要把这个配置文件的记录删掉即可
+                app_state.files.retain(|f| f.id != id);
+                save_file_entries(&app_state.files);
+                app_state.status_message = format!("文件已从本地记录中删除，ID: {}", id);
+                Command::none()
             } else {
                 app_state.status_message = format!("找不到文件 ID: {}", id);
                 Command::none()
@@ -137,7 +139,10 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 app_state.status_message =
                     format!("正在下载 {} (ID: {})...", entry.name, id_to_download);
                 Command::perform(
-                    async move { MockApi::download_file(entry.id.clone(), entry.name.clone(), UserDirs::new().and_then(|user_dirs| user_dirs.download_dir().map(|path| path.to_path_buf())).unwrap_or_else(|| PathBuf::from("."))).await }, // 使用默认下载目录
+                    async move {
+                        let walrus_api = WalrusApi::default(); // 创建 WalrusApi 实例
+                        walrus_api.download_file(entry.id.clone(), entry.name.clone(), UserDirs::new().and_then(|user_dirs| user_dirs.download_dir().map(|path| path.to_path_buf())).unwrap_or_else(|| PathBuf::from("."))).await
+                    }, // 使用默认下载目录
                     |result| Message::DownloadComplete(result),
                 )
             } else {

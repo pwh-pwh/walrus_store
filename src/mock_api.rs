@@ -1,3 +1,4 @@
+/*
 use crate::file_management::get_data_dir;
 use std::{fs, path::PathBuf};
 use uuid::Uuid;
@@ -54,3 +55,4 @@ impl MockApi {
         }
     }
 }
+*/
