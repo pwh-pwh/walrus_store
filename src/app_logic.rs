@@ -1,5 +1,5 @@
 use directories::UserDirs;
-use iced::{Command, Element};
+use iced::Command;
 use rfd::AsyncFileDialog;
 use std::path::PathBuf;
 
@@ -103,12 +103,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             }
         }
         Message::DeleteButtonPressed(id) => {
-            let file_name = app_state
-                .files
-                .iter()
-                .find(|f| f.id == id)
-                .map(|f| f.name.clone());
-            if let Some(name) = file_name {
+            if app_state.files.iter().any(|f| f.id == id) {
                 // 用户要求delete file不用处理，只需要把这个配置文件的记录删掉即可
                 app_state.files.retain(|f| f.id != id);
                 save_file_entries(&app_state.files);

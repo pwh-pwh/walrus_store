@@ -1,4 +1,4 @@
-use std::{default, fs, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 use walrus_rs::WalrusClient;
 
@@ -18,11 +18,6 @@ impl Default for WalrusApi {
 }
 
 impl WalrusApi {
-    fn new(agg_url: String, pub_url: String) -> Self {
-        Self {
-            client: WalrusClient::new(&agg_url, &pub_url).unwrap(),
-        }
-    }
 
     pub async fn upload_file(&self,file_path: PathBuf) -> Result<String, String> {
         println!("上传文件路径: {:?}", file_path.display());
