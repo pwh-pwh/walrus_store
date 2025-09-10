@@ -10,9 +10,9 @@ pub struct FileEntry {
 }
 
 impl FileEntry {
-    pub fn new(name: String) -> Self {
+    pub fn new(id: String, name: String) -> Self {
         Self {
-            id: Uuid::new_v4().to_string(),
+            id,
             name,
             uploaded_at: Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
         }

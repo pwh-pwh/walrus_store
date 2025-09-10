@@ -58,7 +58,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             Command::perform(
                 async move { walrus_api.upload_file(file_path).await },
                 move |result| match result {
-                    Ok(id) => Message::UploadComplete(Ok(FileEntry::new(file_name.clone()))),
+                    Ok(id) => Message::UploadComplete(Ok(FileEntry::new(id, file_name.clone()))),
                     Err(e) => Message::UploadComplete(Err(e)),
                 },
             )
