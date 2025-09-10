@@ -23,13 +23,16 @@ impl MockApi {
         }
     }
 
-    pub async fn download_file(file_id: String, file_name: String) -> Result<String, String> {
-        println!("模拟下载文件，ID: {}", file_id);
+    pub async fn download_file(
+        file_id: String,
+        file_name: String,
+        download_dir: PathBuf,
+    ) -> Result<String, String> {
+        println!("模拟下载文件，ID: {} 到 {:?}", file_id, download_dir.display());
         async_std::task::sleep(std::time::Duration::from_secs(1)).await; // 模拟网络延迟
         if file_id.contains("error") {
             Err(format!("下载失败：模拟错误发生，ID: {}", file_id))
         } else {
-            let download_dir = get_data_dir().join("downloads");
             fs::create_dir_all(&download_dir).map_err(|e| format!("无法创建下载目录: {}", e))?;
             let download_path = download_dir.join(&file_name);
             fs::write(

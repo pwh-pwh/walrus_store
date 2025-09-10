@@ -14,7 +14,7 @@ impl FileEntry {
         Self {
             id: Uuid::new_v4().to_string(),
             name,
-            uploaded_at: Utc::now().to_rfc3339(),
+            uploaded_at: Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
         }
     }
 }

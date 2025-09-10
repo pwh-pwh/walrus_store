@@ -35,9 +35,11 @@ impl WalrusApi {
         }
     }
 
-    pub async fn download_file(&self,blod_id:String,file_path: PathBuf) -> Result<String,String> {
-        let data = self.client.read_blob_by_id(&blod_id).await.map_err(|e|e.to_string())?;
-        fs::write(file_path, data).map_err(|e|e.to_string())?;
+    pub async fn download_file(&self,blob_id:String,file_name: String, download_dir: PathBuf) -> Result<String,String> {
+        let data = self.client.read_blob_by_id(&blob_id).await.map_err(|e|e.to_string())?;
+        fs::create_dir_all(&download_dir).map_err(|e| format!("无法创建下载目录: {}", e))?;
+        let download_path = download_dir.join(&file_name);
+        fs::write(download_path, data).map_err(|e|e.to_string())?;
         Ok("Ok".to_string())
     }
 }
@@ -59,9 +61,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_download() {
-        let pb = PathBuf::from_str("E:\\dev\\walrus_store\\Test.toml").unwrap();
+        let file_name = "Test.toml".to_string();
+        let download_dir = PathBuf::from_str("E:\\dev\\walrus_store").unwrap(); // 指定一个下载目录
         let walrus_api = WalrusApi::default();
-        let result = walrus_api.download_file("Gt72sjsONf_6ySL1Mzrxbjl5_WgEWDRjTWhxN8fBeus".to_string(),pb).await;
+        let result = walrus_api.download_file("Gt72sjsONf_6ySL1Mzrxbjl5_WgEWDRjTWhxN8fBeus".to_string(), file_name, download_dir).await;
         println!("result: {:?}",result);
         assert!(result.is_ok());
     }

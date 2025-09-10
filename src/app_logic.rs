@@ -63,15 +63,40 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             )
         }
         Message::DownloadButtonPressed(id) => {
-            let file_entry = app_state.files.iter().find(|f| f.id == id).cloned();
-            if let Some(entry) = file_entry {
-                app_state.status_message = format!("正在下载 {}...", entry.name);
-                Command::perform(
-                    async move { MockApi::download_file(entry.id.clone(), entry.name.clone()).await },
-                    |result| Message::DownloadComplete(result),
-                )
+            Command::perform(
+                async move { id },
+                |id| Message::TriggerDownloadSelection(id),
+            )
+        }
+        Message::TriggerDownloadSelection(id) => Command::perform(
+            async {
+                let initial_directory = UserDirs::new()
+                    .and_then(|user_dirs| user_dirs.download_dir().map(|path| path.to_path_buf()))
+                    .unwrap_or_else(|| PathBuf::from("."));
+
+                let pick_result = AsyncFileDialog::new()
+                    .set_directory(initial_directory)
+                    .pick_folder()
+                    .await;
+                Message::DownloadLocationSelected(pick_result.map(|handle| handle.path().to_path_buf()), id)
+            },
+            |msg| msg,
+        ),
+        Message::DownloadLocationSelected(path_opt, id) => {
+            if let Some(download_path) = path_opt {
+                let file_entry = app_state.files.iter().find(|f| f.id == id).cloned();
+                if let Some(entry) = file_entry {
+                    app_state.status_message = format!("正在下载 {} 到 {}...", entry.name, download_path.to_string_lossy());
+                    Command::perform(
+                        async move { MockApi::download_file(entry.id.clone(), entry.name.clone(), download_path).await },
+                        |result| Message::DownloadComplete(result),
+                    )
+                } else {
+                    app_state.status_message = format!("找不到文件 ID: {}", id);
+                    Command::none()
+                }
             } else {
-                app_state.status_message = format!("找不到文件 ID: {}", id);
+                app_state.status_message = "未选择下载路径。".into();
                 Command::none()
             }
         }
@@ -112,7 +137,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 app_state.status_message =
                     format!("正在下载 {} (ID: {})...", entry.name, id_to_download);
                 Command::perform(
-                    async move { MockApi::download_file(entry.id.clone(), entry.name.clone()).await },
+                    async move { MockApi::download_file(entry.id.clone(), entry.name.clone(), UserDirs::new().and_then(|user_dirs| user_dirs.download_dir().map(|path| path.to_path_buf())).unwrap_or_else(|| PathBuf::from("."))).await }, // 使用默认下载目录
                     |result| Message::DownloadComplete(result),
                 )
             } else {

@@ -39,6 +39,8 @@ pub enum Message {
     FileSelected(Option<PathBuf>),
     UploadButtonPressed,
     DownloadButtonPressed(String),
+    TriggerDownloadSelection(String),
+    DownloadLocationSelected(Option<PathBuf>, String),
     DeleteButtonPressed(String),
     DownloadInputChanged(String),
     DownloadFromInputButtonPressed,
