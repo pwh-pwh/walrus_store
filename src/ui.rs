@@ -52,7 +52,11 @@ pub fn view_application<'a>(
         .map(|file| {
             row![
                 text(&file.name).width(Length::FillPortion(3)),
-                text(&file.id).width(Length::FillPortion(2)),
+                text(if file.id.len() > 10 {
+                    format!("{}...", &file.id[0..10])
+                } else {
+                    file.id.clone()
+                }).width(Length::FillPortion(2)),
                 text(&file.uploaded_at).width(Length::FillPortion(2)),
                 row![
                     button("复制 ID").on_press(Message::CopyIdToClipboard(file.id.clone())),
