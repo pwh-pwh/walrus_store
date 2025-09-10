@@ -55,6 +55,7 @@ pub fn view_application<'a>(
                 text(&file.id).width(Length::FillPortion(2)),
                 text(&file.uploaded_at).width(Length::FillPortion(2)),
                 row![
+                    button("复制 ID").on_press(Message::CopyIdToClipboard(file.id.clone())),
                     button("下载").on_press(Message::DownloadButtonPressed(file.id.clone())),
                     button("删除").on_press(Message::DeleteButtonPressed(file.id.clone())),
                 ]

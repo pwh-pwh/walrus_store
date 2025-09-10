@@ -41,6 +41,7 @@ pub enum Message {
     DownloadButtonPressed(String),
     TriggerDownloadSelection(String),
     DownloadLocationSelected(Option<PathBuf>, String),
+    CopyIdToClipboard(String),
     DeleteButtonPressed(String),
     DownloadInputChanged(String),
     DownloadFromInputButtonPressed,

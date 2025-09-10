@@ -197,6 +197,14 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             app_state.status_message = msg;
             Command::none()
         }
+        Message::CopyIdToClipboard(id) => {
+            app_state.status_message = format!("文件 ID 已复制到剪贴板: {}", id);
+            Command::perform(async move {
+                let mut clipboard = arboard::Clipboard::new().unwrap();
+                clipboard.set_text(id).unwrap();
+                async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+            }, |_| Message::NoOp)
+        }
         Message::NoOp => Command::none(),
     }
 }
