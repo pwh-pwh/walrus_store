@@ -34,6 +34,12 @@ impl WalrusApi {
             Ok(result.newly_created.unwrap().blob_object.blob_id)
         }
     }
+
+    pub async fn download_file(&self,blod_id:String,file_path: PathBuf) -> Result<String,String> {
+        let data = self.client.read_blob_by_id(&blod_id).await.map_err(|e|e.to_string())?;
+        fs::write(file_path, data).map_err(|e|e.to_string())?;
+        Ok("Ok".to_string())
+    }
 }
 
 
@@ -47,6 +53,15 @@ mod tests {
         let pb = PathBuf::from_str("E:\\dev\\walrus_store\\Cargo.toml").unwrap();
         let walrus_api = WalrusApi::default();
         let result = walrus_api.upload_file(pb).await;
+        println!("result: {:?}",result);
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_download() {
+        let pb = PathBuf::from_str("E:\\dev\\walrus_store\\Test.toml").unwrap();
+        let walrus_api = WalrusApi::default();
+        let result = walrus_api.download_file("Gt72sjsONf_6ySL1Mzrxbjl5_WgEWDRjTWhxN8fBeus".to_string(),pb).await;
         println!("result: {:?}",result);
         assert!(result.is_ok());
     }
