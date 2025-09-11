@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo" # Look for Cargo dependencies
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    # Allow Dependabot to create pull requests for these updates.
+    review-labels:
+      - "dependencies"
+      - "dependabot"
+    # Assign the pull requests to a team or individual for review.
+    assignees:
+      - "pwh-pwh" # Replace with your GitHub username or team
+    # Group minor version updates into a single pull request for easier review
+    groups:
+      minor-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
