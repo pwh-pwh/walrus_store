@@ -10,6 +10,7 @@ pub fn view_application<'a>(
     download_id_input: &'a str,
     status_message: &'a str,
     search_input: &'a str, // 添加搜索输入参数
+    selected_files: &'a std::collections::HashSet<String>, // 新增
 ) -> Element<'a, Message> {
     let title_bar = container(
         text("我的网盘应用")
@@ -46,6 +47,7 @@ pub fn view_application<'a>(
 
     // 文件列表区域
     let file_list_header = row![
+        text("").width(Length::Fixed(20.0)), // 复选框的占位
         text("文件名").width(Length::FillPortion(3)),
         text("文件 ID").width(Length::FillPortion(2)),
         text("上传时间").width(Length::FillPortion(2)),
@@ -62,21 +64,34 @@ pub fn view_application<'a>(
         })
         .collect::<Vec<_>>();
 
-    let file_list_items: Vec<Element<Message>> = filtered_files
+    let file_list_items: Vec<Element<'a, Message>> = filtered_files
         .iter()
-        .map(|file| {
+        .map(|file_ref| {
+            let file_id_clone = file_ref.id.clone();
+            let file_name_clone = file_ref.name.clone();
+            let uploaded_at_clone = file_ref.uploaded_at.clone();
+            let display_id_clone = if file_id_clone.len() > 10 {
+                format!("{}...", &file_id_clone[0..10])
+            } else {
+                file_id_clone.clone()
+            };
+
+            let checkbox = iced::widget::checkbox(
+                "", // label
+                selected_files.contains(&file_id_clone), // is_checked
+            )
+            .on_toggle(move |is_checked| Message::FileSelectedForBatch(file_id_clone.clone(), is_checked)) // 链式调用 on_toggle
+            .width(Length::Fixed(20.0));
+
             row![
-                text(&file.name).width(Length::FillPortion(3)),
-                text(if file.id.len() > 10 {
-                    format!("{}...", &file.id[0..10])
-                } else {
-                    file.id.clone()
-                }).width(Length::FillPortion(2)),
-                text(&file.uploaded_at).width(Length::FillPortion(2)),
+                checkbox,
+                text(file_name_clone).width(Length::FillPortion(3)),
+                text(display_id_clone).width(Length::FillPortion(2)),
+                text(uploaded_at_clone).width(Length::FillPortion(2)),
                 row![
-                    button("复制 ID").on_press(Message::CopyIdToClipboard(file.id.clone())),
-                    button("下载").on_press(Message::DownloadButtonPressed(file.id.clone())),
-                    button("删除").on_press(Message::DeleteButtonPressed(file.id.clone())),
+                    button("复制 ID").on_press(Message::CopyIdToClipboard(file_ref.id.clone())),
+                    button("下载").on_press(Message::DownloadButtonPressed(file_ref.id.clone())),
+                    button("删除").on_press(Message::DeleteButtonPressed(file_ref.id.clone())),
                 ]
                 .spacing(5)
                 .width(Length::FillPortion(2)),
@@ -95,6 +110,18 @@ pub fn view_application<'a>(
         .spacing(10)
         .padding(10)
         .width(Length::Fill);
+
+    // 批量操作区域
+    let batch_actions_area = if selected_files.is_empty() {
+        row![]
+    } else {
+        row![
+            button("批量删除").on_press(Message::BatchDeleteButtonPressed),
+        ]
+        .spacing(10)
+        .padding(10)
+        .width(Length::Fill)
+    };
 
     // 下载区域
     let download_area = column![
@@ -126,6 +153,7 @@ pub fn view_application<'a>(
         search_input_widget, // 添加搜索输入框
         file_list_area,
         Space::with_height(Length::Fixed(20.0)),
+        batch_actions_area, // 添加批量操作区域
         download_area,
         status_bar,
     ]

@@ -229,5 +229,27 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             app_state.search_input = input;
             Command::none()
         }
+        Message::FileSelectedForBatch(id, is_selected) => {
+            if is_selected {
+                app_state.selected_files.insert(id);
+            } else {
+                app_state.selected_files.remove(&id);
+            }
+            Command::none()
+        }
+        Message::BatchDeleteButtonPressed => {
+            let ids_to_delete: Vec<String> = app_state.selected_files.drain().collect(); // 清空并获取所有选中的ID
+            if ids_to_delete.is_empty() {
+                app_state.status_message = "没有选择任何文件进行批量删除。".into();
+                return Command::none();
+            }
+
+            for id in ids_to_delete {
+                app_state.files.retain(|f| f.id != id);
+            }
+            save_file_entries(&app_state.files);
+            app_state.status_message = format!("已批量删除 {} 个文件记录。", app_state.selected_files.len());
+            Command::none()
+        }
     }
 }

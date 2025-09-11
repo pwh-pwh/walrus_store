@@ -1,6 +1,7 @@
 // #![windows_subsystem = "windows"]
 
 use iced::{Application, Command, Element, Font, Settings, Theme};
+use std::collections::HashSet;
 
 mod app_logic; // Add this line
 mod data;
@@ -26,6 +27,7 @@ pub struct WalrusStore {
     pub download_id_input: String,
     pub status_message: String,
     pub search_input: String, // 用于文件搜索的输入
+    pub selected_files: std::collections::HashSet<String>, // 新增，用于存储选中的文件ID
 }
 
 // 定义应用程序的消息
@@ -40,6 +42,8 @@ pub enum Message {
     DownloadLocationSelected(Option<PathBuf>, String),
     CopyIdToClipboard(String),
     DeleteButtonPressed(String),
+    FileSelectedForBatch(String, bool), // 用于批量操作中选择/取消选择文件 (文件ID, 是否选中)
+    BatchDeleteButtonPressed, // 批量删除按钮
     DownloadInputChanged(String),
     DownloadFromInputButtonPressed,
     TriggerDownloadSelectionFromInput(String), // 用于从输入框下载时选择路径
@@ -65,6 +69,7 @@ impl Application for WalrusStore {
             WalrusStore {
                 files: load_file_entries(),
                 search_input: String::new(), // 初始化搜索输入为空
+                selected_files: HashSet::new(), // 初始化选中的文件ID为空
                 ..Default::default()
             },
             Command::none(),
@@ -87,6 +92,7 @@ impl Application for WalrusStore {
             &self.download_id_input,
             &self.status_message,
             &self.search_input, // 添加 search_input 参数
+            &self.selected_files, // 新增，传递 selected_files
         )
     }
 }
