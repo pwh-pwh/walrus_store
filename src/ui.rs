@@ -13,7 +13,7 @@ pub fn view_application<'a>(
     selected_files: &'a std::collections::HashSet<String>, // 新增
 ) -> Element<'a, Message> {
     let title_bar = container(
-        text("我的网盘应用")
+        text("Walrus云盘")
             .size(30)
             .horizontal_alignment(iced::alignment::Horizontal::Center)
             .vertical_alignment(iced::alignment::Vertical::Center),
