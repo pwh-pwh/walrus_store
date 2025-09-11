@@ -382,10 +382,18 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             Command::perform(
                 async move { walrus_api.upload_config_data(config_json).await },
                 |result| match result {
-                    Ok(blob_id) => Message::StatusMessage(format!("配置上传成功，ID: {}", blob_id)),
+                    Ok(blob_id) => Message::UploadConfigSuccess(blob_id),
                     Err(e) => Message::StatusMessage(format!("配置上传失败: {}", e)),
                 },
             )
+        }
+        Message::UploadConfigSuccess(blob_id) => {
+            app_state.status_message = format!("配置上传成功，ID: {} 已复制blobId", blob_id.clone());
+            Command::perform(async move {
+                let mut clipboard = arboard::Clipboard::new().unwrap();
+                clipboard.set_text(blob_id).unwrap();
+                async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+            }, |_| Message::NoOp)
         }
     }
 }
