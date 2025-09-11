@@ -368,5 +368,24 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             }
             Command::none()
         }
+        Message::UploadConfigButtonPressed => {
+            app_state.status_message = "正在上传配置...".into();
+            let walrus_api = WalrusApi::default();
+            let config_json = match serde_json::to_string_pretty(&app_state.files) {
+                Ok(json) => json,
+                Err(e) => {
+                    app_state.status_message = format!("序列化配置失败: {}", e);
+                    return Command::none();
+                }
+            };
+
+            Command::perform(
+                async move { walrus_api.upload_config_data(config_json).await },
+                |result| match result {
+                    Ok(blob_id) => Message::StatusMessage(format!("配置上传成功，ID: {}", blob_id)),
+                    Err(e) => Message::StatusMessage(format!("配置上传失败: {}", e)),
+                },
+            )
+        }
     }
 }

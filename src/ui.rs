@@ -55,6 +55,9 @@ pub fn view_application<'a>(
         button("导出配置")
             .on_press(Message::TriggerExportConfig)
             .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
+        button("上传配置")
+            .on_press(Message::UploadConfigButtonPressed)
+            .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
     ]
     .spacing(SPACING)
     .padding(PADDING);

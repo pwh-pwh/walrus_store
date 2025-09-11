@@ -38,6 +38,19 @@ impl WalrusApi {
         Ok("Ok".to_string())
     }
 }
+ 
+impl WalrusApi {
+    pub async fn upload_config_data(&self, config_data: String) -> Result<String, String> {
+        println!("上传配置数据。");
+        let data = config_data.into_bytes();
+        let result = self.client.store_blob(data, Some(1), None, None, None).await.map_err(|e|e.to_string())?;
+        if result.newly_created.is_none() {
+            Ok(result.already_certified.unwrap().blob_id)
+        } else {
+            Ok(result.newly_created.unwrap().blob_object.blob_id)
+        }
+    }
+}
 
 
 #[cfg(test)]

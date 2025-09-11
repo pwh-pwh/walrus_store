@@ -55,6 +55,7 @@ pub enum Message {
     ExportConfigSelected(Option<PathBuf>), // 导出配置文件路径选择完成
     TriggerImportConfig, // 触发导入配置文件
     ImportConfigSelected(Option<PathBuf>), // 导入配置文件路径选择完成
+    UploadConfigButtonPressed, // 新增：上传当前配置
     UploadProgress(f32),
     UploadComplete(Result<FileEntry, String>),
     DownloadComplete(Result<String, String>),
