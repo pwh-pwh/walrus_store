@@ -48,12 +48,27 @@ pub fn view_application<'a>(
     search_input: &'a str, // 添加搜索输入参数
     selected_files: &'a std::collections::HashSet<String>, // 新增
 ) -> Element<'a, Message> {
+    let config_buttons = row![
+        button("导入配置")
+            .on_press(Message::TriggerImportConfig)
+            .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
+        button("导出配置")
+            .on_press(Message::TriggerExportConfig)
+            .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
+    ]
+    .spacing(SPACING)
+    .padding(PADDING);
+
     let title_bar = container(
-        text("Walrus云盘")
-            .size(30)
-            .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center)
-            .style(iced::theme::Text::Color(CYBER_FOREGROUND)),
+        row![
+            text("Walrus云盘")
+                .size(30)
+                .style(iced::theme::Text::Color(CYBER_FOREGROUND)),
+            iced::widget::Space::with_width(Length::Fill), // 填充空间，将按钮推到右边
+            config_buttons,
+        ]
+        .align_items(iced::alignment::Alignment::Center)
+        .spacing(SPACING)
     )
     .width(Length::Fill)
     .padding(PADDING)
@@ -258,32 +273,6 @@ pub fn view_application<'a>(
     .padding(PADDING)
     .width(Length::Fill);
 
-    // 导入/导出配置区域
-    let config_management_area = container(
-        row![
-            button("导入配置")
-                .on_press(Message::TriggerImportConfig)
-                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
-            button("导出配置")
-                .on_press(Message::TriggerExportConfig)
-                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
-        ]
-        .spacing(SPACING)
-        .padding(PADDING)
-        .width(Length::Fill),
-    )
-    .style(iced::theme::Container::Custom(Box::new(
-        CyberContainerStyle {
-            background: Some(CYBER_GREY.into()),
-            border: iced::Border {
-                radius: 5.0.into(),
-                width: 1.0,
-                color: CYBER_ACCENT_PURPLE,
-            },
-        },
-    )))
-    .padding(PADDING)
-    .width(Length::Fill);
 
     let status_bar = container(
         text(status_message)
@@ -313,7 +302,6 @@ pub fn view_application<'a>(
         file_list_area,
         batch_actions_area, // 添加批量操作区域
         download_area,
-        config_management_area, // 添加配置管理区域
         status_bar,
     ]
     .spacing(SPACING)
