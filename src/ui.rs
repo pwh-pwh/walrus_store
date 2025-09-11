@@ -1,33 +1,42 @@
 use crate::Message;
 use crate::data::FileEntry;
-use iced::widget::{button, column, container, row, scrollable, text, text_input}; // 移除 checkbox 导入
+use iced::widget::{button, column, container, row, scrollable, text, text_input, checkbox};
 use iced::{Element, Length, Color};
-
+ 
 const SPACING: u16 = 10;
 const PADDING: u16 = 10;
-
-// Hacker theme colors (using a slightly desaturated green for better contrast on dark)
-// const HACKER_BACKGROUND: Color = Color::from_rgb( // 移除 HACKER_BACKGROUND
-//     0x0A as f32 / 255.0,
-//     0x0A as f32 / 255.0,
-//     0x0A as f32 / 255.0,
-// ); // Darkest grey
-const HACKER_FOREGROUND: Color = Color::from_rgb(
+ 
+// Cyberpunk theme colors
+const CYBER_BACKGROUND: Color = Color::from_rgb(
+    0x08 as f32 / 255.0,
+    0x08 as f32 / 255.0,
+    0x1A as f32 / 255.0,
+); // Dark Blue/Near Black
+const CYBER_FOREGROUND: Color = Color::from_rgb(
     0x00 as f32 / 255.0,
-    0xE6 as f32 / 255.0,
+    0xFF as f32 / 255.0,
     0x00 as f32 / 255.0,
-); // Green
-const HACKER_ACCENT: Color = Color::from_rgb(
+); // Bright Green (Neon)
+const CYBER_ACCENT_BLUE: Color = Color::from_rgb(
     0x00 as f32 / 255.0,
-    0xA0 as f32 / 255.0,
-    0xA0 as f32 / 255.0,
-); // Cyan
-// const HACKER_RED: Color = Color::from_rgb(0xFF as f32 / 255.0, 0x33 as f32 / 255.0, 0x33 as f32 / 255.0); // Red for destructive actions // 移除 HACKER_RED
-// const HACKER_GREY: Color = Color::from_rgb( // 移除 HACKER_GREY
-//     0x33 as f32 / 255.0,
-//     0x33 as f32 / 255.0,
-//     0x33 as f32 / 255.0,
-// ); // Dark grey for secondary elements
+    0xC8 as f32 / 255.0,
+    0xFF as f32 / 255.0,
+); // Bright Blue (Neon)
+const CYBER_ACCENT_PURPLE: Color = Color::from_rgb(
+    0xBF as f32 / 255.0,
+    0x00 as f32 / 255.0,
+    0xFF as f32 / 255.0,
+); // Bright Purple (Neon)
+const CYBER_ERROR: Color = Color::from_rgb(
+    0xFF as f32 / 255.0,
+    0x33 as f32 / 255.0,
+    0x33 as f32 / 255.0,
+); // Bright Red
+const CYBER_GREY: Color = Color::from_rgb(
+    0x20 as f32 / 255.0,
+    0x20 as f32 / 255.0,
+    0x30 as f32 / 255.0,
+); // Dark Grey for secondary elements
 
 
 pub fn view_application<'a>(
@@ -44,12 +53,21 @@ pub fn view_application<'a>(
             .size(30)
             .horizontal_alignment(iced::alignment::Horizontal::Center)
             .vertical_alignment(iced::alignment::Vertical::Center)
-            .style(iced::theme::Text::Color(HACKER_FOREGROUND)), // 设置文本颜色为绿色
+            .style(iced::theme::Text::Color(CYBER_FOREGROUND)),
     )
     .width(Length::Fill)
     .padding(PADDING)
     .center_y()
-    .style(iced::theme::Container::Box); // 使用 Box 样式，它在 Dark 主题下会有深色背景
+    .style(iced::theme::Container::Custom(Box::new(
+        CyberContainerStyle {
+            background: Some(CYBER_BACKGROUND.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 2.0,
+                color: CYBER_ACCENT_BLUE,
+            },
+        },
+    )));
 
     // 上传区域
     let upload_area = container(
@@ -57,25 +75,34 @@ pub fn view_application<'a>(
             row![
                 button("选择文件")
                     .on_press(Message::TriggerFileSelection)
-                    .style(iced::theme::Button::Primary), // 使用 Primary 样式，它在 Dark 主题下有深色背景
+                    .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
                 text_input("文件路径", upload_file_path)
                     .on_input(|_| Message::NoOp) // 只读
                     .width(Length::FillPortion(2))
-                    .style(iced::theme::TextInput::Default), // 使用默认样式
+                    .style(iced::theme::TextInput::Custom(Box::new(CyberTextInputStyle))),
             ]
             .spacing(SPACING),
             button("上传文件")
                 .on_press(Message::UploadButtonPressed)
-                .style(iced::theme::Button::Primary), // 使用 Primary 样式
+                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
             // 进度条 (占位符)
             text(format!("上传进度: {:.0}%", upload_progress * 100.0))
-                .style(iced::theme::Text::Color(HACKER_FOREGROUND)), // 进度文本颜色
+                .style(iced::theme::Text::Color(CYBER_FOREGROUND)),
         ]
         .spacing(SPACING)
         .padding(PADDING)
         .width(Length::Fill),
     )
-    .style(iced::theme::Container::Box) // 使用 Box 样式，适应 Dark 主题
+    .style(iced::theme::Container::Custom(Box::new(
+        CyberContainerStyle {
+            background: Some(CYBER_GREY.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 1.0,
+                color: CYBER_ACCENT_BLUE,
+            },
+        },
+    )))
     .padding(PADDING)
     .width(Length::Fill);
 
@@ -84,21 +111,30 @@ pub fn view_application<'a>(
         .on_input(Message::SearchInputChanged)
         .padding(PADDING)
         .width(Length::Fill)
-        .style(iced::theme::TextInput::Default); // 使用默认样式，文本颜色将由全局主题控制
+        .style(iced::theme::TextInput::Custom(Box::new(CyberTextInputStyle)));
 
     // 文件列表区域
     let file_list_header = container(
         row![
             text("").width(Length::Fixed(20.0)), // 复选框的占位
-            text("文件名").width(Length::FillPortion(3)).style(iced::theme::Text::Color(HACKER_ACCENT)),
-            text("文件 ID").width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_ACCENT)),
-            text("上传时间").width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_ACCENT)),
-            text("操作").width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_ACCENT)),
+            text("文件名").width(Length::FillPortion(3)).style(iced::theme::Text::Color(CYBER_ACCENT_BLUE)),
+            text("文件 ID").width(Length::FillPortion(2)).style(iced::theme::Text::Color(CYBER_ACCENT_BLUE)),
+            text("上传时间").width(Length::FillPortion(2)).style(iced::theme::Text::Color(CYBER_ACCENT_BLUE)),
+            text("操作").width(Length::FillPortion(2)).style(iced::theme::Text::Color(CYBER_ACCENT_BLUE)),
         ]
         .spacing(SPACING)
         .padding(PADDING)
     )
-    .style(iced::theme::Container::Box); // 添加背景和边框
+    .style(iced::theme::Container::Custom(Box::new(
+        CyberContainerStyle {
+            background: Some(CYBER_GREY.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 1.0,
+                color: CYBER_ACCENT_PURPLE,
+            },
+        },
+    )));
 
     let filtered_files = files
         .iter()
@@ -120,29 +156,32 @@ pub fn view_application<'a>(
                 file_id_clone.clone()
             };
 
-            let checkbox = iced::widget::checkbox(
+            let checkbox = checkbox(
                 "", // label
                 selected_files.contains(&file_id_clone), // is_checked
             )
-            .on_toggle(move |is_checked| Message::FileSelectedForBatch(file_id_clone.clone(), is_checked)) // 链式调用 on_toggle
-            .width(Length::Fixed(20.0)); // 不设置自定义样式，让其继承全局 Dark 主题的默认外观
+            .on_toggle(move |is_checked| Message::FileSelectedForBatch(file_id_clone.clone(), is_checked))
+            .width(Length::Fixed(20.0))
+            .style(iced::theme::Checkbox::Custom(Box::new(
+                CyberCheckboxStyle,
+            )));
 
             container(
                 row![
                     checkbox,
-                    text(file_name_clone).width(Length::FillPortion(3)).style(iced::theme::Text::Color(HACKER_FOREGROUND)),
-                    text(display_id_clone).width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_FOREGROUND)),
-                    text(uploaded_at_clone).width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_FOREGROUND)),
+                    text(file_name_clone).width(Length::FillPortion(3)).style(iced::theme::Text::Color(CYBER_FOREGROUND)),
+                    text(display_id_clone).width(Length::FillPortion(2)).style(iced::theme::Text::Color(CYBER_FOREGROUND)),
+                    text(uploaded_at_clone).width(Length::FillPortion(2)).style(iced::theme::Text::Color(CYBER_FOREGROUND)),
                     row![
                         button("复制 ID")
                             .on_press(Message::CopyIdToClipboard(file_ref.id.clone()))
-                            .style(iced::theme::Button::Text), // 使用 Text 样式
+                            .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
                         button("下载")
                             .on_press(Message::DownloadButtonPressed(file_ref.id.clone()))
-                            .style(iced::theme::Button::Primary), // 使用 Primary 样式
+                            .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
                         button("删除")
                             .on_press(Message::DeleteButtonPressed(file_ref.id.clone()))
-                            .style(iced::theme::Button::Destructive), // 使用 Destructive 样式
+                            .style(iced::theme::Button::Custom(Box::new(CyberDestructiveButtonStyle))),
                     ]
                     .spacing(SPACING)
                     .width(Length::FillPortion(2)),
@@ -150,7 +189,16 @@ pub fn view_application<'a>(
                 .spacing(SPACING)
                 .padding(PADDING),
             )
-            .style(iced::theme::Container::Box) // 使用 Box 样式，适应 Dark 主题
+            .style(iced::theme::Container::Custom(Box::new(
+                CyberContainerStyle {
+                    background: Some(CYBER_BACKGROUND.into()),
+                    border: iced::Border {
+                        radius: 5.0.into(),
+                        width: 1.0,
+                        color: CYBER_ACCENT_PURPLE,
+                    },
+                },
+            )))
             .into()
         })
         .collect();
@@ -171,10 +219,10 @@ pub fn view_application<'a>(
         row![
             button("批量删除")
                 .on_press(Message::BatchDeleteButtonPressed)
-                .style(iced::theme::Button::Destructive), // 使用 Destructive 样式
+                .style(iced::theme::Button::Custom(Box::new(CyberDestructiveButtonStyle))),
             button("批量下载")
                 .on_press(Message::BatchDownloadButtonPressed)
-                .style(iced::theme::Button::Primary), // 使用 Primary 样式
+                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
         ]
         .spacing(SPACING)
         .padding(PADDING)
@@ -188,16 +236,25 @@ pub fn view_application<'a>(
                 .on_input(Message::DownloadInputChanged)
                 .padding(PADDING)
                 .width(Length::Fill)
-                .style(iced::theme::TextInput::Default), // 使用默认样式
+                .style(iced::theme::TextInput::Custom(Box::new(CyberTextInputStyle))),
             button("从 ID 下载")
                 .on_press(Message::DownloadFromInputButtonPressed)
-                .style(iced::theme::Button::Primary), // 使用 Primary 样式
+                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
         ]
         .spacing(SPACING)
         .padding(PADDING)
         .width(Length::Fill),
     )
-    .style(iced::theme::Container::Box) // 添加边框和背景
+    .style(iced::theme::Container::Custom(Box::new(
+        CyberContainerStyle {
+            background: Some(CYBER_GREY.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 1.0,
+                color: CYBER_ACCENT_BLUE,
+            },
+        },
+    )))
     .padding(PADDING)
     .width(Length::Fill);
 
@@ -206,16 +263,25 @@ pub fn view_application<'a>(
         row![
             button("导入配置")
                 .on_press(Message::TriggerImportConfig)
-                .style(iced::theme::Button::Secondary), // 使用 Secondary 样式
+                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
             button("导出配置")
                 .on_press(Message::TriggerExportConfig)
-                .style(iced::theme::Button::Secondary), // 使用 Secondary 样式
+                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
         ]
         .spacing(SPACING)
         .padding(PADDING)
         .width(Length::Fill),
     )
-    .style(iced::theme::Container::Box) // 添加边框和背景
+    .style(iced::theme::Container::Custom(Box::new(
+        CyberContainerStyle {
+            background: Some(CYBER_GREY.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 1.0,
+                color: CYBER_ACCENT_PURPLE,
+            },
+        },
+    )))
     .padding(PADDING)
     .width(Length::Fill);
 
@@ -224,12 +290,21 @@ pub fn view_application<'a>(
             .size(16)
             .horizontal_alignment(iced::alignment::Horizontal::Center)
             .vertical_alignment(iced::alignment::Vertical::Center)
-            .style(iced::theme::Text::Color(HACKER_FOREGROUND)), // 设置文本颜色
+            .style(iced::theme::Text::Color(CYBER_FOREGROUND)),
     )
     .width(Length::Fill)
     .padding(PADDING)
     .center_x()
-    .style(iced::theme::Container::Box); // 添加背景和边框
+    .style(iced::theme::Container::Custom(Box::new(
+        CyberContainerStyle {
+            background: Some(CYBER_BACKGROUND.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 2.0,
+                color: CYBER_ACCENT_BLUE,
+            },
+        },
+    )));
 
     column![
         title_bar,
@@ -245,4 +320,211 @@ pub fn view_application<'a>(
     .width(Length::Fill)
     .height(Length::Fill)
     .into()
+}
+ 
+struct CyberContainerStyle {
+    background: Option<iced::Background>,
+    border: iced::Border,
+}
+ 
+impl iced::widget::container::StyleSheet for CyberContainerStyle {
+    type Style = iced::Theme;
+ 
+    fn appearance(&self, _style: &Self::Style) -> iced::widget::container::Appearance {
+        iced::widget::container::Appearance {
+            background: self.background,
+            border: self.border,
+            text_color: Some(CYBER_FOREGROUND),
+            shadow: iced::Shadow::default(), // 添加 shadow 字段
+        }
+    }
+}
+ 
+struct CyberButtonStyle;
+ 
+impl iced::widget::button::StyleSheet for CyberButtonStyle {
+    type Style = iced::Theme;
+ 
+    fn active(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            background: Some(CYBER_ACCENT_BLUE.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 1.0,
+                color: CYBER_ACCENT_BLUE,
+            },
+            text_color: Color::BLACK,
+            ..Default::default()
+        }
+    }
+ 
+    fn hovered(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            background: Some(CYBER_ACCENT_PURPLE.into()),
+            text_color: Color::WHITE,
+            ..self.active(_style)
+        }
+    }
+ 
+    fn pressed(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            border: iced::Border {
+                width: 2.0,
+                ..self.active(_style).border
+            },
+            ..self.active(_style)
+        }
+    }
+ 
+    fn disabled(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            background: Some(CYBER_GREY.into()),
+            text_color: Color::from_rgb(0.5, 0.5, 0.5),
+            ..self.active(_style)
+        }
+    }
+}
+ 
+struct CyberDestructiveButtonStyle;
+ 
+impl iced::widget::button::StyleSheet for CyberDestructiveButtonStyle {
+    type Style = iced::Theme;
+ 
+    fn active(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            background: Some(CYBER_ERROR.into()),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 1.0,
+                color: CYBER_ERROR,
+            },
+            text_color: Color::BLACK,
+            ..Default::default()
+        }
+    }
+ 
+    fn hovered(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            background: Some(Color::from_rgb(1.0, 0.2, 0.2).into()), // Lighter red on hover
+            text_color: Color::WHITE,
+            ..self.active(_style)
+        }
+    }
+ 
+    fn pressed(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            border: iced::Border {
+                width: 2.0,
+                ..self.active(_style).border
+            },
+            ..self.active(_style)
+        }
+    }
+ 
+    fn disabled(&self, _style: &Self::Style) -> iced::widget::button::Appearance {
+        iced::widget::button::Appearance {
+            background: Some(CYBER_GREY.into()),
+            text_color: Color::from_rgb(0.5, 0.5, 0.5),
+            ..self.active(_style)
+        }
+    }
+}
+ 
+struct CyberTextInputStyle;
+ 
+impl iced::widget::text_input::StyleSheet for CyberTextInputStyle {
+    type Style = iced::Theme;
+ 
+    fn active(&self, _style: &Self::Style) -> iced::widget::text_input::Appearance {
+        iced::widget::text_input::Appearance {
+            background: CYBER_GREY.into(),
+            border: iced::Border {
+                radius: 5.0.into(),
+                width: 1.0,
+                color: CYBER_ACCENT_BLUE,
+            },
+            icon_color: CYBER_FOREGROUND,
+        }
+    }
+ 
+    fn focused(&self, _style: &Self::Style) -> iced::widget::text_input::Appearance {
+        iced::widget::text_input::Appearance {
+            border: iced::Border {
+                color: CYBER_ACCENT_PURPLE,
+                ..self.active(_style).border
+            },
+            ..self.active(_style)
+        }
+    }
+ 
+    fn hovered(&self, _style: &Self::Style) -> iced::widget::text_input::Appearance {
+        iced::widget::text_input::Appearance {
+            border: iced::Border {
+                color: CYBER_ACCENT_PURPLE,
+                ..self.active(_style).border
+            },
+            ..self.focused(_style)
+        }
+    }
+ 
+    fn placeholder_color(&self, _style: &Self::Style) -> Color {
+        Color::from_rgb(0.5, 0.5, 0.5)
+    }
+ 
+    fn value_color(&self, _style: &Self::Style) -> Color {
+        CYBER_FOREGROUND
+    }
+ 
+    fn disabled_color(&self, _style: &Self::Style) -> Color {
+        Color::from_rgb(0.5, 0.5, 0.5)
+    }
+ 
+    fn selection_color(&self, _style: &Self::Style) -> Color {
+        CYBER_ACCENT_BLUE
+    }
+ 
+    fn disabled(&self, _style: &Self::Style) -> iced::widget::text_input::Appearance {
+        iced::widget::text_input::Appearance {
+            background: Color::from_rgb(0.1, 0.1, 0.1).into(),
+            border: iced::Border {
+                color: Color::from_rgb(0.2, 0.2, 0.2),
+                ..self.active(_style).border
+            },
+            icon_color: Color::from_rgb(0.3, 0.3, 0.3),
+            ..self.active(_style)
+        }
+    }
+}
+ 
+struct CyberCheckboxStyle;
+ 
+impl iced::widget::checkbox::StyleSheet for CyberCheckboxStyle {
+    type Style = iced::Theme;
+ 
+    fn active(&self, _style: &Self::Style, is_checked: bool) -> iced::widget::checkbox::Appearance {
+        iced::widget::checkbox::Appearance {
+            background: if is_checked {
+                CYBER_ACCENT_BLUE.into()
+            } else {
+                CYBER_GREY.into()
+            },
+            border: iced::Border {
+                radius: 3.0.into(),
+                width: 1.0,
+                color: CYBER_ACCENT_BLUE,
+            },
+            icon_color: Color::BLACK,
+            text_color: Some(CYBER_FOREGROUND),
+        }
+    }
+ 
+    fn hovered(&self, _style: &Self::Style, is_checked: bool) -> iced::widget::checkbox::Appearance {
+        iced::widget::checkbox::Appearance {
+            border: iced::Border {
+                color: CYBER_ACCENT_PURPLE,
+                ..self.active(_style, is_checked).border
+            },
+            ..self.active(_style, is_checked)
+        }
+    }
 }
