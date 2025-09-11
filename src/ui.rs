@@ -205,7 +205,7 @@ pub fn view_application<'a>(
 
     let file_list_scrollable = scrollable(column(file_list_items).spacing(SPACING))
         .width(Length::Fill)
-        .height(Length::FillPortion(3));
+        .height(Length::FillPortion(6));
 
     let file_list_area = column![file_list_header, file_list_scrollable,]
         .spacing(SPACING)
