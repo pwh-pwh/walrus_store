@@ -18,11 +18,14 @@ impl Default for WalrusApi {
 }
 
 impl WalrusApi {
-
-    pub async fn upload_file(&self,file_path: PathBuf) -> Result<String, String> {
+    pub async fn upload_file(&self, file_path: PathBuf) -> Result<String, String> {
         println!("上传文件路径: {:?}", file_path.display());
-        let data = fs::read(&file_path).map_err(|e|e.to_string())?;
-        let result = self.client.store_blob(data, Some(1), None, None, None).await.map_err(|e|e.to_string())?;
+        let data = fs::read(&file_path).map_err(|e| e.to_string())?;
+        let result = self
+            .client
+            .store_blob(data, Some(1), None, None, None)
+            .await
+            .map_err(|e| e.to_string())?;
         if result.newly_created.is_none() {
             Ok(result.already_certified.unwrap().blob_id)
         } else {
@@ -30,20 +33,33 @@ impl WalrusApi {
         }
     }
 
-    pub async fn download_file(&self,blob_id:String,file_name: String, download_dir: PathBuf) -> Result<String,String> {
-        let data = self.client.read_blob_by_id(&blob_id).await.map_err(|e|e.to_string())?;
+    pub async fn download_file(
+        &self,
+        blob_id: String,
+        file_name: String,
+        download_dir: PathBuf,
+    ) -> Result<String, String> {
+        let data = self
+            .client
+            .read_blob_by_id(&blob_id)
+            .await
+            .map_err(|e| e.to_string())?;
         fs::create_dir_all(&download_dir).map_err(|e| format!("无法创建下载目录: {}", e))?;
         let download_path = download_dir.join(&file_name);
-        fs::write(download_path, data).map_err(|e|e.to_string())?;
+        fs::write(download_path, data).map_err(|e| e.to_string())?;
         Ok("Ok".to_string())
     }
 }
- 
+
 impl WalrusApi {
     pub async fn upload_config_data(&self, config_data: String) -> Result<String, String> {
         println!("上传配置数据。");
         let data = config_data.into_bytes();
-        let result = self.client.store_blob(data, Some(1), None, None, None).await.map_err(|e|e.to_string())?;
+        let result = self
+            .client
+            .store_blob(data, Some(1), None, None, None)
+            .await
+            .map_err(|e| e.to_string())?;
         if result.newly_created.is_none() {
             Ok(result.already_certified.unwrap().blob_id)
         } else {
@@ -53,23 +69,26 @@ impl WalrusApi {
 
     pub async fn download_config_by_id(&self, blob_id: String) -> Result<String, String> {
         println!("下载配置数据，ID: {}", blob_id);
-        let data = self.client.read_blob_by_id(&blob_id).await.map_err(|e| e.to_string())?;
+        let data = self
+            .client
+            .read_blob_by_id(&blob_id)
+            .await
+            .map_err(|e| e.to_string())?;
         String::from_utf8(data).map_err(|e| format!("无法将配置数据解码为 UTF-8: {}", e))
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
     use super::*;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn test_upload() {
         let pb = PathBuf::from_str("E:\\dev\\walrus_store\\Cargo.toml").unwrap();
         let walrus_api = WalrusApi::default();
         let result = walrus_api.upload_file(pb).await;
-        println!("result: {:?}",result);
+        println!("result: {:?}", result);
         assert!(result.is_ok());
     }
 
@@ -78,10 +97,14 @@ mod tests {
         let file_name = "Test.toml".to_string();
         let download_dir = PathBuf::from_str("E:\\dev\\walrus_store").unwrap(); // 指定一个下载目录
         let walrus_api = WalrusApi::default();
-        let result = walrus_api.download_file("Gt72sjsONf_6ySL1Mzrxbjl5_WgEWDRjTWhxN8fBeus".to_string(), file_name, download_dir).await;
-        println!("result: {:?}",result);
+        let result = walrus_api
+            .download_file(
+                "Gt72sjsONf_6ySL1Mzrxbjl5_WgEWDRjTWhxN8fBeus".to_string(),
+                file_name,
+                download_dir,
+            )
+            .await;
+        println!("result: {:?}", result);
         assert!(result.is_ok());
     }
-
-    
 }

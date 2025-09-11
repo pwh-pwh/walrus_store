@@ -43,22 +43,22 @@ pub enum Message {
     CopyIdToClipboard(String),
     DeleteButtonPressed(String),
     FileSelectedForBatch(String, bool), // 用于批量操作中选择/取消选择文件 (文件ID, 是否选中)
-    BatchDeleteButtonPressed, // 批量删除按钮
-    BatchDownloadButtonPressed, // 批量下载按钮
-    TriggerBatchDownloadSelection, // 触发批量下载的路径选择
+    BatchDeleteButtonPressed,           // 批量删除按钮
+    BatchDownloadButtonPressed,         // 批量下载按钮
+    TriggerBatchDownloadSelection,      // 触发批量下载的路径选择
     BatchDownloadLocationSelected(Option<PathBuf>), // 批量下载路径选择完成
     DownloadInputChanged(String),
     DownloadFromInputButtonPressed,
     TriggerDownloadSelectionFromInput(String), // 用于从输入框下载时选择路径
     DownloadLocationSelectedFromInput(Option<PathBuf>, String), // 从输入框下载后选择路径
-    TriggerExportConfig, // 触发导出配置文件
-    ExportConfigSelected(Option<PathBuf>), // 导出配置文件路径选择完成
-    TriggerImportConfig, // 触发导入配置文件
-    ImportConfigSelected(Option<PathBuf>), // 导入配置文件路径选择完成
-    UploadConfigButtonPressed, // 新增：上传当前配置
-    UploadConfigSuccess(String), // 新增：配置上传成功，包含blob ID
-    LoadConfigFromIdButtonPressed, // 新增：加载远程配置按钮被按下
-    ConfigLoaded(Result<String, String>), // 新增：远程配置加载完成，包含配置内容
+    TriggerExportConfig,                       // 触发导出配置文件
+    ExportConfigSelected(Option<PathBuf>),     // 导出配置文件路径选择完成
+    TriggerImportConfig,                       // 触发导入配置文件
+    ImportConfigSelected(Option<PathBuf>),     // 导入配置文件路径选择完成
+    UploadConfigButtonPressed,                 // 新增：上传当前配置
+    UploadConfigSuccess(String),               // 新增：配置上传成功，包含blob ID
+    LoadConfigFromIdButtonPressed,             // 新增：加载远程配置按钮被按下
+    ConfigLoaded(Result<String, String>),      // 新增：远程配置加载完成，包含配置内容
     UploadProgress(f32),
     UploadComplete(Result<FileEntry, String>),
     DownloadComplete(Result<String, String>),
@@ -79,7 +79,7 @@ impl Application for WalrusStore {
         (
             WalrusStore {
                 files: load_file_entries(),
-                search_input: String::new(), // 初始化搜索输入为空
+                search_input: String::new(),    // 初始化搜索输入为空
                 selected_files: HashSet::new(), // 初始化选中的文件ID为空
                 ..Default::default()
             },
@@ -102,7 +102,7 @@ impl Application for WalrusStore {
             self.upload_progress,
             &self.download_id_input,
             &self.status_message,
-            &self.search_input, // 添加 search_input 参数
+            &self.search_input,   // 添加 search_input 参数
             &self.selected_files, // 新增，传递 selected_files
         )
     }

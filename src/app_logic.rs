@@ -1,8 +1,8 @@
 use directories::UserDirs;
 use iced::Command;
 use rfd::AsyncFileDialog;
-use std::path::PathBuf;
-use std::fs; // 引入 fs 模块
+use std::fs;
+use std::path::PathBuf; // 引入 fs 模块
 
 use crate::Message;
 use crate::WalrusStore; // 需要引入 WalrusStore 结构体
@@ -19,7 +19,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
         Message::TriggerFileSelection => Command::perform(
             async {
                 let initial_directory = UserDirs::new()
-                  .map(|user_dirs| user_dirs.home_dir().to_path_buf())
+                    .map(|user_dirs| user_dirs.home_dir().to_path_buf())
                     .unwrap_or_else(|| PathBuf::from("."));
 
                 let pick_result = AsyncFileDialog::new()
@@ -54,7 +54,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
 
             app_state.status_message = format!("正在上传 {}...", file_name);
             app_state.upload_progress = 0.0;
- 
+
             let walrus_api = WalrusApi::default(); // 创建 WalrusApi 实例
             Command::perform(
                 async move { walrus_api.upload_file(file_path).await },
@@ -65,10 +65,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             )
         }
         Message::DownloadButtonPressed(id) => {
-            Command::perform(
-                async move { id },
-                Message::TriggerDownloadSelection,
-            )
+            Command::perform(async move { id }, Message::TriggerDownloadSelection)
         }
         Message::TriggerDownloadSelection(id) => Command::perform(
             async {
@@ -80,7 +77,10 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                     .set_directory(initial_directory)
                     .pick_folder()
                     .await;
-                Message::DownloadLocationSelected(pick_result.map(|handle| handle.path().to_path_buf()), id)
+                Message::DownloadLocationSelected(
+                    pick_result.map(|handle| handle.path().to_path_buf()),
+                    id,
+                )
             },
             |msg| msg,
         ),
@@ -88,10 +88,18 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             if let Some(download_path) = path_opt {
                 let file_entry = app_state.files.iter().find(|f| f.id == id).cloned();
                 if let Some(entry) = file_entry {
-                    app_state.status_message = format!("正在下载 {} 到 {}...", entry.name, download_path.to_string_lossy());
+                    app_state.status_message = format!(
+                        "正在下载 {} 到 {}...",
+                        entry.name,
+                        download_path.to_string_lossy()
+                    );
                     let walrus_api = WalrusApi::default(); // 创建 WalrusApi 实例
                     Command::perform(
-                        async move { walrus_api.download_file(entry.id.clone(), entry.name.clone(), download_path).await },
+                        async move {
+                            walrus_api
+                                .download_file(entry.id.clone(), entry.name.clone(), download_path)
+                                .await
+                        },
                         Message::DownloadComplete,
                     )
                 } else {
@@ -143,7 +151,10 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                     .await;
                 // 注意：这里需要传递下载的文件名。由于我们只知道 ID，需要从文件条目中获取或在API中处理
                 // 暂时使用一个占位符，实际可能需要额外的API调用来获取文件名
-                Message::DownloadLocationSelectedFromInput(pick_result.map(|handle| handle.path().to_path_buf()), id)
+                Message::DownloadLocationSelectedFromInput(
+                    pick_result.map(|handle| handle.path().to_path_buf()),
+                    id,
+                )
             },
             |msg| msg,
         ),
@@ -159,10 +170,18 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                     file_name = entry.name.clone();
                 }
 
-                app_state.status_message = format!("正在下载文件 (ID: {}) 到 {}...", id_to_download, download_path.to_string_lossy());
+                app_state.status_message = format!(
+                    "正在下载文件 (ID: {}) 到 {}...",
+                    id_to_download,
+                    download_path.to_string_lossy()
+                );
                 let walrus_api = WalrusApi::default();
                 Command::perform(
-                    async move { walrus_api.download_file(id_to_download.clone(), file_name, download_path).await },
+                    async move {
+                        walrus_api
+                            .download_file(id_to_download.clone(), file_name, download_path)
+                            .await
+                    },
                     Message::DownloadComplete,
                 )
             } else {
@@ -219,11 +238,14 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
         }
         Message::CopyIdToClipboard(id) => {
             app_state.status_message = format!("文件 ID 已复制到剪贴板: {}", id);
-            Command::perform(async move {
-                let mut clipboard = arboard::Clipboard::new().unwrap();
-                clipboard.set_text(id).unwrap();
-                async_std::task::sleep(std::time::Duration::from_millis(100)).await;
-            }, |_| Message::NoOp)
+            Command::perform(
+                async move {
+                    let mut clipboard = arboard::Clipboard::new().unwrap();
+                    clipboard.set_text(id).unwrap();
+                    async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+                },
+                |_| Message::NoOp,
+            )
         }
         Message::NoOp => Command::none(),
         Message::SearchInputChanged(input) => {
@@ -245,7 +267,8 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 return Command::none();
             }
 
-            for id in &ids_to_delete { // 迭代引用而不是移动所有权
+            for id in &ids_to_delete {
+                // 迭代引用而不是移动所有权
                 app_state.files.retain(|f| f.id != *id); // 解引用 id
             }
             save_file_entries(&app_state.files);
@@ -269,7 +292,9 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                     .set_directory(initial_directory)
                     .pick_folder()
                     .await;
-                Message::BatchDownloadLocationSelected(pick_result.map(|handle| handle.path().to_path_buf()))
+                Message::BatchDownloadLocationSelected(
+                    pick_result.map(|handle| handle.path().to_path_buf()),
+                )
             },
             |msg| msg,
         ),
@@ -287,7 +312,15 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                         let walrus_api = WalrusApi::default();
                         let download_path_clone = download_path.clone();
                         commands.push(Command::perform(
-                            async move { walrus_api.download_file(entry.id.clone(), entry.name.clone(), download_path_clone).await },
+                            async move {
+                                walrus_api
+                                    .download_file(
+                                        entry.id.clone(),
+                                        entry.name.clone(),
+                                        download_path_clone,
+                                    )
+                                    .await
+                            },
                             Message::DownloadComplete,
                         ));
                     } else {
@@ -319,12 +352,13 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
         Message::ExportConfigSelected(path_opt) => {
             if let Some(path) = path_opt {
                 match serde_json::to_string_pretty(&app_state.files) {
-                    Ok(json) => {
-                        match fs::write(&path, json) {
-                            Ok(_) => app_state.status_message = format!("配置文件已导出到: {}", path.to_string_lossy()),
-                            Err(e) => app_state.status_message = format!("导出配置文件失败: {}", e),
+                    Ok(json) => match fs::write(&path, json) {
+                        Ok(_) => {
+                            app_state.status_message =
+                                format!("配置文件已导出到: {}", path.to_string_lossy())
                         }
-                    }
+                        Err(e) => app_state.status_message = format!("导出配置文件失败: {}", e),
+                    },
                     Err(e) => app_state.status_message = format!("序列化文件列表失败: {}", e),
                 }
             } else {
@@ -356,7 +390,8 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                                 app_state.files = imported_files;
                                 save_file_entries(&app_state.files); // 保存到本地配置
                                 app_state.selected_files.clear(); // 清空选择
-                                app_state.status_message = format!("配置文件已从 {} 导入。", path.to_string_lossy());
+                                app_state.status_message =
+                                    format!("配置文件已从 {} 导入。", path.to_string_lossy());
                             }
                             Err(e) => app_state.status_message = format!("解析导入文件失败: {}", e),
                         }
@@ -388,12 +423,16 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             )
         }
         Message::UploadConfigSuccess(blob_id) => {
-            app_state.status_message = format!("配置上传成功，ID: {} 已复制blobId", blob_id.clone());
-            Command::perform(async move {
-                let mut clipboard = arboard::Clipboard::new().unwrap();
-                clipboard.set_text(blob_id).unwrap();
-                async_std::task::sleep(std::time::Duration::from_millis(100)).await;
-            }, |_| Message::NoOp)
+            app_state.status_message =
+                format!("配置上传成功，ID: {} 已复制blobId", blob_id.clone());
+            Command::perform(
+                async move {
+                    let mut clipboard = arboard::Clipboard::new().unwrap();
+                    clipboard.set_text(blob_id).unwrap();
+                    async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+                },
+                |_| Message::NoOp,
+            )
         }
         Message::LoadConfigFromIdButtonPressed => {
             let id_to_load = app_state.download_id_input.clone();
@@ -410,17 +449,15 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
         }
         Message::ConfigLoaded(result) => {
             match result {
-                Ok(config_data) => {
-                    match serde_json::from_str::<Vec<FileEntry>>(&config_data) {
-                        Ok(imported_files) => {
-                            app_state.files = imported_files;
-                            save_file_entries(&app_state.files);
-                            app_state.selected_files.clear();
-                            app_state.status_message = "配置已成功加载。".into();
-                        }
-                        Err(e) => app_state.status_message = format!("解析配置数据失败: {}", e),
+                Ok(config_data) => match serde_json::from_str::<Vec<FileEntry>>(&config_data) {
+                    Ok(imported_files) => {
+                        app_state.files = imported_files;
+                        save_file_entries(&app_state.files);
+                        app_state.selected_files.clear();
+                        app_state.status_message = "配置已成功加载。".into();
                     }
-                }
+                    Err(e) => app_state.status_message = format!("解析配置数据失败: {}", e),
+                },
                 Err(e) => {
                     app_state.status_message = format!("加载配置失败: {}", e);
                 }
