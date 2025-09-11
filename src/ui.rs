@@ -1,7 +1,10 @@
 use crate::Message;
 use crate::data::FileEntry;
-use iced::widget::{Space, button, column, container, row, scrollable, text, text_input};
-use iced::{Element, Length};
+use iced::widget::{button, column, container, row, scrollable, text, text_input};
+use iced::{Element, Length, Color}; // Add Color
+
+const SPACING: u16 = 10;
+const PADDING: u16 = 10;
 
 pub fn view_application<'a>(
     files: &'a Vec<FileEntry>,
@@ -16,45 +19,60 @@ pub fn view_application<'a>(
         text("Walrus云盘")
             .size(30)
             .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center),
+            .vertical_alignment(iced::alignment::Vertical::Center)
+            .style(iced::theme::Text::Color(Color::WHITE)), // 设置文本颜色为白色
     )
     .width(Length::Fill)
-    .padding(10)
-    .center_y();
+    .padding(PADDING)
+    .center_y()
+    .style(iced::theme::Container::Box); // 使用 Box 样式，它通常有背景色
 
     // 上传区域
-    let upload_area = column![
-        row![
-            button("选择文件").on_press(Message::TriggerFileSelection),
-            text_input("文件路径", upload_file_path)
-                .on_input(|_| Message::NoOp) // 只读
-                .width(Length::FillPortion(2)),
+    let upload_area = container(
+        column![
+            row![
+                button("选择文件")
+                    .on_press(Message::TriggerFileSelection)
+                    .style(iced::theme::Button::Positive), // 使用 Positive 样式
+                text_input("文件路径", upload_file_path)
+                    .on_input(|_| Message::NoOp) // 只读
+                    .width(Length::FillPortion(2)),
+            ]
+            .spacing(SPACING),
+            button("上传文件")
+                .on_press(Message::UploadButtonPressed)
+                .style(iced::theme::Button::Primary), // 使用 Primary 样式
+            // 进度条 (占位符)
+            text(format!("上传进度: {:.0}%", upload_progress * 100.0)),
         ]
-        .spacing(10),
-        button("上传文件").on_press(Message::UploadButtonPressed),
-        // 进度条 (占位符)
-        text(format!("上传进度: {:.0}%", upload_progress * 100.0)),
-    ]
-    .spacing(10)
-    .padding(10)
+        .spacing(SPACING)
+        .padding(PADDING)
+        .width(Length::Fill),
+    )
+    .style(iced::theme::Container::Box) // 添加边框和背景
+    .padding(PADDING)
     .width(Length::Fill);
 
     // 文件搜索输入框
     let search_input_widget = text_input("搜索文件...", search_input)
         .on_input(Message::SearchInputChanged)
-        .padding(10)
-        .width(Length::Fill);
+        .padding(PADDING)
+        .width(Length::Fill)
+        .style(iced::theme::TextInput::Default); // 使用默认样式，通常包含边框
 
     // 文件列表区域
-    let file_list_header = row![
-        text("").width(Length::Fixed(20.0)), // 复选框的占位
-        text("文件名").width(Length::FillPortion(3)),
-        text("文件 ID").width(Length::FillPortion(2)),
-        text("上传时间").width(Length::FillPortion(2)),
-        text("操作").width(Length::FillPortion(2)),
-    ]
-    .spacing(10)
-    .padding(5);
+    let file_list_header = container(
+        row![
+            text("").width(Length::Fixed(20.0)), // 复选框的占位
+            text("文件名").width(Length::FillPortion(3)),
+            text("文件 ID").width(Length::FillPortion(2)),
+            text("上传时间").width(Length::FillPortion(2)),
+            text("操作").width(Length::FillPortion(2)),
+        ]
+        .spacing(SPACING)
+        .padding(PADDING)
+    )
+    .style(iced::theme::Container::Box); // 添加背景和边框
 
     let filtered_files = files
         .iter()
@@ -83,32 +101,41 @@ pub fn view_application<'a>(
             .on_toggle(move |is_checked| Message::FileSelectedForBatch(file_id_clone.clone(), is_checked)) // 链式调用 on_toggle
             .width(Length::Fixed(20.0));
 
-            row![
-                checkbox,
-                text(file_name_clone).width(Length::FillPortion(3)),
-                text(display_id_clone).width(Length::FillPortion(2)),
-                text(uploaded_at_clone).width(Length::FillPortion(2)),
+            container(
                 row![
-                    button("复制 ID").on_press(Message::CopyIdToClipboard(file_ref.id.clone())),
-                    button("下载").on_press(Message::DownloadButtonPressed(file_ref.id.clone())),
-                    button("删除").on_press(Message::DeleteButtonPressed(file_ref.id.clone())),
+                    checkbox,
+                    text(file_name_clone).width(Length::FillPortion(3)),
+                    text(display_id_clone).width(Length::FillPortion(2)),
+                    text(uploaded_at_clone).width(Length::FillPortion(2)),
+                    row![
+                        button("复制 ID")
+                            .on_press(Message::CopyIdToClipboard(file_ref.id.clone()))
+                            .style(iced::theme::Button::Text), // 使用 Text 样式
+                        button("下载")
+                            .on_press(Message::DownloadButtonPressed(file_ref.id.clone()))
+                            .style(iced::theme::Button::Primary), // 使用 Primary 样式
+                        button("删除")
+                            .on_press(Message::DeleteButtonPressed(file_ref.id.clone()))
+                            .style(iced::theme::Button::Destructive), // 使用 Destructive 样式
+                    ]
+                    .spacing(SPACING)
+                    .width(Length::FillPortion(2)),
                 ]
-                .spacing(5)
-                .width(Length::FillPortion(2)),
-            ]
-            .spacing(10)
-            .padding(5)
+                .spacing(SPACING)
+                .padding(PADDING),
+            )
+            .style(iced::theme::Container::Box) // 添加背景和边框
             .into()
         })
         .collect();
 
-    let file_list_scrollable = scrollable(column(file_list_items).spacing(5))
+    let file_list_scrollable = scrollable(column(file_list_items).spacing(SPACING))
         .width(Length::Fill)
         .height(Length::FillPortion(3));
 
     let file_list_area = column![file_list_header, file_list_scrollable,]
-        .spacing(10)
-        .padding(10)
+        .spacing(SPACING)
+        .padding(PADDING)
         .width(Length::Fill);
 
     // 批量操作区域
@@ -116,59 +143,79 @@ pub fn view_application<'a>(
         row![]
     } else {
         row![
-            button("批量删除").on_press(Message::BatchDeleteButtonPressed),
-            button("批量下载").on_press(Message::BatchDownloadButtonPressed),
+            button("批量删除")
+                .on_press(Message::BatchDeleteButtonPressed)
+                .style(iced::theme::Button::Destructive), // 使用 Destructive 样式
+            button("批量下载")
+                .on_press(Message::BatchDownloadButtonPressed)
+                .style(iced::theme::Button::Primary), // 使用 Primary 样式
         ]
-        .spacing(10)
-        .padding(10)
+        .spacing(SPACING)
+        .padding(PADDING)
         .width(Length::Fill)
     };
 
     // 下载区域
-    let download_area = column![
-        text_input("输入文件 ID", download_id_input)
-            .on_input(Message::DownloadInputChanged)
-            .padding(10)
-            .width(Length::Fill),
-        button("从 ID 下载").on_press(Message::DownloadFromInputButtonPressed),
-    ]
-    .spacing(10)
-    .padding(10)
+    let download_area = container(
+        column![
+            text_input("输入文件 ID", download_id_input)
+                .on_input(Message::DownloadInputChanged)
+                .padding(PADDING)
+                .width(Length::Fill)
+                .style(iced::theme::TextInput::Default), // 使用默认样式
+            button("从 ID 下载")
+                .on_press(Message::DownloadFromInputButtonPressed)
+                .style(iced::theme::Button::Primary), // 使用 Primary 样式
+        ]
+        .spacing(SPACING)
+        .padding(PADDING)
+        .width(Length::Fill),
+    )
+    .style(iced::theme::Container::Box) // 添加边框和背景
+    .padding(PADDING)
     .width(Length::Fill);
 
-    // 状态栏
     // 导入/导出配置区域
-    let config_management_area = row![
-        button("导入配置").on_press(Message::TriggerImportConfig),
-        button("导出配置").on_press(Message::TriggerExportConfig),
-    ]
-    .spacing(10)
-    .padding(10)
+    let config_management_area = container(
+        row![
+            button("导入配置")
+                .on_press(Message::TriggerImportConfig)
+                .style(iced::theme::Button::Secondary), // 使用 Secondary 样式
+            button("导出配置")
+                .on_press(Message::TriggerExportConfig)
+                .style(iced::theme::Button::Secondary), // 使用 Secondary 样式
+        ]
+        .spacing(SPACING)
+        .padding(PADDING)
+        .width(Length::Fill),
+    )
+    .style(iced::theme::Container::Box) // 添加边框和背景
+    .padding(PADDING)
     .width(Length::Fill);
 
     let status_bar = container(
         text(status_message)
             .size(16)
             .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center),
+            .vertical_alignment(iced::alignment::Vertical::Center)
+            .style(iced::theme::Text::Color(Color::BLACK)), // 设置文本颜色
     )
     .width(Length::Fill)
-    .padding(5)
-    .center_x();
+    .padding(PADDING)
+    .center_x()
+    .style(iced::theme::Container::Box); // 添加背景和边框
 
     column![
         title_bar,
         upload_area,
-        Space::with_height(Length::Fixed(20.0)),
         search_input_widget, // 添加搜索输入框
         file_list_area,
-        Space::with_height(Length::Fixed(20.0)),
         batch_actions_area, // 添加批量操作区域
         download_area,
-        Space::with_height(Length::Fixed(20.0)),
         config_management_area, // 添加配置管理区域
         status_bar,
     ]
+    .spacing(SPACING)
     .width(Length::Fill)
     .height(Length::Fill)
     .into()
