@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v4
@@ -27,13 +27,6 @@ jobs:
 
     - name: Build
       run: cargo build --release
-
-    - name: Upload Linux Artifact
-      if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v4
-      with:
-        name: walrus_store-linux
-        path: target/release/walrus_store
 
     - name: Upload macOS Artifact
       if: runner.os == 'macOS'
@@ -71,7 +64,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          artifacts/walrus_store-linux/walrus_store
           artifacts/walrus_store-macos/walrus_store
           artifacts/walrus_store-windows/walrus_store.exe
         draft: false
