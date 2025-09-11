@@ -255,12 +255,16 @@ pub fn view_application<'a>(
                 .padding(PADDING)
                 .width(Length::Fill)
                 .style(iced::theme::TextInput::Custom(Box::new(CyberTextInputStyle))),
-            button("从 ID 下载")
-                .on_press(Message::DownloadFromInputButtonPressed)
-                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
-            button("加载配置")
-                .on_press(Message::LoadConfigFromIdButtonPressed)
-                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
+            row![
+                button("从 ID 下载")
+                    .on_press(Message::DownloadFromInputButtonPressed)
+                    .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
+                button("加载配置")
+                    .on_press(Message::LoadConfigFromIdButtonPressed)
+                    .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
+            ]
+            .spacing(SPACING)
+            .width(Length::Fill),
         ]
         .spacing(SPACING)
         .padding(PADDING)
