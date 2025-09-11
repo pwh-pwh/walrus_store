@@ -9,6 +9,7 @@ pub fn view_application<'a>(
     upload_progress: f32,
     download_id_input: &'a str,
     status_message: &'a str,
+    search_input: &'a str, // 添加搜索输入参数
 ) -> Element<'a, Message> {
     let title_bar = container(
         text("我的网盘应用")
@@ -37,6 +38,12 @@ pub fn view_application<'a>(
     .padding(10)
     .width(Length::Fill);
 
+    // 文件搜索输入框
+    let search_input_widget = text_input("搜索文件...", search_input)
+        .on_input(Message::SearchInputChanged)
+        .padding(10)
+        .width(Length::Fill);
+
     // 文件列表区域
     let file_list_header = row![
         text("文件名").width(Length::FillPortion(3)),
@@ -47,7 +54,15 @@ pub fn view_application<'a>(
     .spacing(10)
     .padding(5);
 
-    let file_list_items: Vec<Element<Message>> = files
+    let filtered_files = files
+        .iter()
+        .filter(|file| {
+            file.name.to_lowercase().contains(&search_input.to_lowercase()) ||
+            file.id.to_lowercase().contains(&search_input.to_lowercase())
+        })
+        .collect::<Vec<_>>();
+
+    let file_list_items: Vec<Element<Message>> = filtered_files
         .iter()
         .map(|file| {
             row![
@@ -108,6 +123,7 @@ pub fn view_application<'a>(
         title_bar,
         upload_area,
         Space::with_height(Length::Fixed(20.0)),
+        search_input_widget, // 添加搜索输入框
         file_list_area,
         Space::with_height(Length::Fixed(20.0)),
         download_area,

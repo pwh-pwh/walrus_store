@@ -225,5 +225,9 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             }, |_| Message::NoOp)
         }
         Message::NoOp => Command::none(),
+        Message::SearchInputChanged(input) => {
+            app_state.search_input = input;
+            Command::none()
+        }
     }
 }

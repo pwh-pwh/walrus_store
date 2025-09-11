@@ -25,6 +25,7 @@ pub struct WalrusStore {
     pub upload_file_path: String,
     pub download_id_input: String,
     pub status_message: String,
+    pub search_input: String, // 用于文件搜索的输入
 }
 
 // 定义应用程序的消息
@@ -48,6 +49,7 @@ pub enum Message {
     DownloadComplete(Result<String, String>),
     DeleteComplete(Result<String, String>),
     StatusMessage(String),
+    SearchInputChanged(String), // 用于文件搜索输入框变化的事件
     NoOp,
 }
 
@@ -62,6 +64,7 @@ impl Application for WalrusStore {
         (
             WalrusStore {
                 files: load_file_entries(),
+                search_input: String::new(), // 初始化搜索输入为空
                 ..Default::default()
             },
             Command::none(),
@@ -83,6 +86,7 @@ impl Application for WalrusStore {
             self.upload_progress,
             &self.download_id_input,
             &self.status_message,
+            &self.search_input, // 添加 search_input 参数
         )
     }
 }
