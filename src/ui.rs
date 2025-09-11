@@ -258,6 +258,9 @@ pub fn view_application<'a>(
             button("从 ID 下载")
                 .on_press(Message::DownloadFromInputButtonPressed)
                 .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
+            button("加载配置")
+                .on_press(Message::LoadConfigFromIdButtonPressed)
+                .style(iced::theme::Button::Custom(Box::new(CyberButtonStyle))),
         ]
         .spacing(SPACING)
         .padding(PADDING)

@@ -57,6 +57,8 @@ pub enum Message {
     ImportConfigSelected(Option<PathBuf>), // 导入配置文件路径选择完成
     UploadConfigButtonPressed, // 新增：上传当前配置
     UploadConfigSuccess(String), // 新增：配置上传成功，包含blob ID
+    LoadConfigFromIdButtonPressed, // 新增：加载远程配置按钮被按下
+    ConfigLoaded(Result<String, String>), // 新增：远程配置加载完成，包含配置内容
     UploadProgress(f32),
     UploadComplete(Result<FileEntry, String>),
     DownloadComplete(Result<String, String>),

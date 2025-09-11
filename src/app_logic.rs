@@ -395,5 +395,37 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 async_std::task::sleep(std::time::Duration::from_millis(100)).await;
             }, |_| Message::NoOp)
         }
+        Message::LoadConfigFromIdButtonPressed => {
+            let id_to_load = app_state.download_id_input.clone();
+            if id_to_load.is_empty() {
+                app_state.status_message = "请输入要加载的配置 ID。".into();
+                return Command::none();
+            }
+            app_state.status_message = format!("正在从 ID: {} 加载配置...", id_to_load);
+            let walrus_api = WalrusApi::default();
+            Command::perform(
+                async move { walrus_api.download_config_by_id(id_to_load).await },
+                |result| Message::ConfigLoaded(result),
+            )
+        }
+        Message::ConfigLoaded(result) => {
+            match result {
+                Ok(config_data) => {
+                    match serde_json::from_str::<Vec<FileEntry>>(&config_data) {
+                        Ok(imported_files) => {
+                            app_state.files = imported_files;
+                            save_file_entries(&app_state.files);
+                            app_state.selected_files.clear();
+                            app_state.status_message = "配置已成功加载。".into();
+                        }
+                        Err(e) => app_state.status_message = format!("解析配置数据失败: {}", e),
+                    }
+                }
+                Err(e) => {
+                    app_state.status_message = format!("加载配置失败: {}", e);
+                }
+            }
+            Command::none()
+        }
     }
 }

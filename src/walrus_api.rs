@@ -50,6 +50,12 @@ impl WalrusApi {
             Ok(result.newly_created.unwrap().blob_object.blob_id)
         }
     }
+
+    pub async fn download_config_by_id(&self, blob_id: String) -> Result<String, String> {
+        println!("下载配置数据，ID: {}", blob_id);
+        let data = self.client.read_blob_by_id(&blob_id).await.map_err(|e| e.to_string())?;
+        String::from_utf8(data).map_err(|e| format!("无法将配置数据解码为 UTF-8: {}", e))
+    }
 }
 
 
