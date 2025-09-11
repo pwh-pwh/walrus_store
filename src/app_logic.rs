@@ -119,29 +119,53 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             Command::none()
         }
         Message::DownloadFromInputButtonPressed => {
-            if app_state.download_id_input.is_empty() {
+            let id_to_download = app_state.download_id_input.clone();
+            if id_to_download.is_empty() {
                 app_state.status_message = "请输入要下载的文件 ID。".into();
                 return Command::none();
             }
-            let id_to_download = app_state.download_id_input.clone();
-            let file_entry = app_state
-                .files
-                .iter()
-                .find(|f| f.id == id_to_download)
-                .cloned();
+            // 触发文件选择对话框，并将下载ID传递给后续处理
+            Command::perform(
+                async move { id_to_download },
+                |id| Message::TriggerDownloadSelectionFromInput(id),
+            )
+        }
+        Message::TriggerDownloadSelectionFromInput(id) => Command::perform(
+            async {
+                let initial_directory = UserDirs::new()
+                    .and_then(|user_dirs| user_dirs.download_dir().map(|path| path.to_path_buf()))
+                    .unwrap_or_else(|| PathBuf::from("."));
 
-            if let Some(entry) = file_entry {
-                app_state.status_message =
-                    format!("正在下载 {} (ID: {})...", entry.name, id_to_download);
+                let pick_result = AsyncFileDialog::new()
+                    .set_directory(initial_directory)
+                    .pick_folder()
+                    .await;
+                // 注意：这里需要传递下载的文件名。由于我们只知道 ID，需要从文件条目中获取或在API中处理
+                // 暂时使用一个占位符，实际可能需要额外的API调用来获取文件名
+                Message::DownloadLocationSelectedFromInput(pick_result.map(|handle| handle.path().to_path_buf()), id)
+            },
+            |msg| msg,
+        ),
+        Message::DownloadLocationSelectedFromInput(path_opt, id_to_download) => {
+            if let Some(download_path) = path_opt {
+                // 现在我们需要从Walrus API获取文件名，或者直接使用一个默认文件名
+                // 简化处理：假设API能根据ID返回文件数据，但文件名需要手动指定或从API结果中提取
+                // 这里我们暂时使用一个placeholder，或者尝试从本地已存在的文件列表中查找
+                let mut file_name = format!("downloaded_file_{}", id_to_download); // 默认文件名
+
+                // 尝试从本地文件列表中查找文件名
+                if let Some(entry) = app_state.files.iter().find(|f| f.id == id_to_download) {
+                    file_name = entry.name.clone();
+                }
+
+                app_state.status_message = format!("正在下载文件 (ID: {}) 到 {}...", id_to_download, download_path.to_string_lossy());
+                let walrus_api = WalrusApi::default();
                 Command::perform(
-                    async move {
-                        let walrus_api = WalrusApi::default(); // 创建 WalrusApi 实例
-                        walrus_api.download_file(entry.id.clone(), entry.name.clone(), UserDirs::new().and_then(|user_dirs| user_dirs.download_dir().map(|path| path.to_path_buf())).unwrap_or_else(|| PathBuf::from("."))).await
-                    }, // 使用默认下载目录
+                    async move { walrus_api.download_file(id_to_download.clone(), file_name, download_path).await },
                     |result| Message::DownloadComplete(result),
                 )
             } else {
-                app_state.status_message = format!("找不到文件 ID: {}", id_to_download);
+                app_state.status_message = "未选择下载路径。".into();
                 Command::none()
             }
         }

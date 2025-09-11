@@ -41,6 +41,8 @@ pub enum Message {
     DeleteButtonPressed(String),
     DownloadInputChanged(String),
     DownloadFromInputButtonPressed,
+    TriggerDownloadSelectionFromInput(String), // 用于从输入框下载时选择路径
+    DownloadLocationSelectedFromInput(Option<PathBuf>, String), // 从输入框下载后选择路径
     UploadProgress(f32),
     UploadComplete(Result<FileEntry, String>),
     DownloadComplete(Result<String, String>),
