@@ -44,6 +44,9 @@ pub enum Message {
     DeleteButtonPressed(String),
     FileSelectedForBatch(String, bool), // 用于批量操作中选择/取消选择文件 (文件ID, 是否选中)
     BatchDeleteButtonPressed, // 批量删除按钮
+    BatchDownloadButtonPressed, // 批量下载按钮
+    TriggerBatchDownloadSelection, // 触发批量下载的路径选择
+    BatchDownloadLocationSelected(Option<PathBuf>), // 批量下载路径选择完成
     DownloadInputChanged(String),
     DownloadFromInputButtonPressed,
     TriggerDownloadSelectionFromInput(String), // 用于从输入框下载时选择路径

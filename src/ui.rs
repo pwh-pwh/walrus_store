@@ -117,6 +117,7 @@ pub fn view_application<'a>(
     } else {
         row![
             button("批量删除").on_press(Message::BatchDeleteButtonPressed),
+            button("批量下载").on_press(Message::BatchDownloadButtonPressed),
         ]
         .spacing(10)
         .padding(10)

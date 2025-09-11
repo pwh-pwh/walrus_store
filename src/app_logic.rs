@@ -244,12 +244,61 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 return Command::none();
             }
 
-            for id in ids_to_delete {
-                app_state.files.retain(|f| f.id != id);
+            for id in &ids_to_delete { // 迭代引用而不是移动所有权
+                app_state.files.retain(|f| f.id != *id); // 解引用 id
             }
             save_file_entries(&app_state.files);
-            app_state.status_message = format!("已批量删除 {} 个文件记录。", app_state.selected_files.len());
+            app_state.status_message = format!("已批量删除 {} 个文件记录。", ids_to_delete.len());
             Command::none()
+        }
+        Message::BatchDownloadButtonPressed => {
+            if app_state.selected_files.is_empty() {
+                app_state.status_message = "没有选择任何文件进行批量下载。".into();
+                return Command::none();
+            }
+            Command::perform(async {}, |_| Message::TriggerBatchDownloadSelection)
+        }
+        Message::TriggerBatchDownloadSelection => Command::perform(
+            async {
+                let initial_directory = UserDirs::new()
+                    .and_then(|user_dirs| user_dirs.download_dir().map(|path| path.to_path_buf()))
+                    .unwrap_or_else(|| PathBuf::from("."));
+
+                let pick_result = AsyncFileDialog::new()
+                    .set_directory(initial_directory)
+                    .pick_folder()
+                    .await;
+                Message::BatchDownloadLocationSelected(pick_result.map(|handle| handle.path().to_path_buf()))
+            },
+            |msg| msg,
+        ),
+        Message::BatchDownloadLocationSelected(path_opt) => {
+            if let Some(download_path) = path_opt {
+                let ids_to_download: Vec<String> = app_state.selected_files.drain().collect(); // 清空并获取所有选中的ID
+                if ids_to_download.is_empty() {
+                    app_state.status_message = "没有选择任何文件进行批量下载。".into();
+                    return Command::none();
+                }
+
+                let mut commands = Vec::new();
+                for id in ids_to_download {
+                    if let Some(entry) = app_state.files.iter().find(|f| f.id == id).cloned() {
+                        let walrus_api = WalrusApi::default();
+                        let download_path_clone = download_path.clone();
+                        commands.push(Command::perform(
+                            async move { walrus_api.download_file(entry.id.clone(), entry.name.clone(), download_path_clone).await },
+                            |result| Message::DownloadComplete(result),
+                        ));
+                    } else {
+                        app_state.status_message = format!("找不到文件 ID: {}", id);
+                    }
+                }
+                app_state.status_message = format!("正在批量下载 {} 个文件...", commands.len());
+                Command::batch(commands)
+            } else {
+                app_state.status_message = "未选择批量下载路径。".into();
+                Command::none()
+            }
         }
     }
 }
