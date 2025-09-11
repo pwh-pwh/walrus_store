@@ -2,11 +2,12 @@ use directories::UserDirs;
 use iced::Command;
 use rfd::AsyncFileDialog;
 use std::path::PathBuf;
+use std::fs; // 引入 fs 模块
 
 use crate::Message;
 use crate::WalrusStore; // 需要引入 WalrusStore 结构体
 use crate::data::FileEntry;
-use crate::file_management::save_file_entries;
+use crate::file_management::save_file_entries; // 移除 get_files_json_path 导入
 use crate::walrus_api::WalrusApi; // 引入 WalrusApi
 
 pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<Message> {
@@ -299,6 +300,73 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 app_state.status_message = "未选择批量下载路径。".into();
                 Command::none()
             }
+        }
+        Message::TriggerExportConfig => Command::perform(
+            async {
+                let initial_directory = UserDirs::new()
+                    .and_then(|user_dirs| user_dirs.document_dir().map(|path| path.to_path_buf()))
+                    .unwrap_or_else(|| PathBuf::from("."));
+
+                let pick_result = AsyncFileDialog::new()
+                    .set_directory(initial_directory)
+                    .set_file_name("walrus_store_config.json")
+                    .save_file()
+                    .await;
+                Message::ExportConfigSelected(pick_result.map(|handle| handle.path().to_path_buf()))
+            },
+            |msg| msg,
+        ),
+        Message::ExportConfigSelected(path_opt) => {
+            if let Some(path) = path_opt {
+                match serde_json::to_string_pretty(&app_state.files) {
+                    Ok(json) => {
+                        match fs::write(&path, json) {
+                            Ok(_) => app_state.status_message = format!("配置文件已导出到: {}", path.to_string_lossy()),
+                            Err(e) => app_state.status_message = format!("导出配置文件失败: {}", e),
+                        }
+                    }
+                    Err(e) => app_state.status_message = format!("序列化文件列表失败: {}", e),
+                }
+            } else {
+                app_state.status_message = "未选择导出路径。".into();
+            }
+            Command::none()
+        }
+        Message::TriggerImportConfig => Command::perform(
+            async {
+                let initial_directory = UserDirs::new()
+                    .and_then(|user_dirs| user_dirs.document_dir().map(|path| path.to_path_buf()))
+                    .unwrap_or_else(|| PathBuf::from("."));
+
+                let pick_result = AsyncFileDialog::new()
+                    .set_directory(initial_directory)
+                    .add_filter("JSON", &["json"])
+                    .pick_file()
+                    .await;
+                Message::ImportConfigSelected(pick_result.map(|handle| handle.path().to_path_buf()))
+            },
+            |msg| msg,
+        ),
+        Message::ImportConfigSelected(path_opt) => {
+            if let Some(path) = path_opt {
+                match fs::read_to_string(&path) {
+                    Ok(contents) => {
+                        match serde_json::from_str::<Vec<FileEntry>>(&contents) {
+                            Ok(imported_files) => {
+                                app_state.files = imported_files;
+                                save_file_entries(&app_state.files); // 保存到本地配置
+                                app_state.selected_files.clear(); // 清空选择
+                                app_state.status_message = format!("配置文件已从 {} 导入。", path.to_string_lossy());
+                            }
+                            Err(e) => app_state.status_message = format!("解析导入文件失败: {}", e),
+                        }
+                    }
+                    Err(e) => app_state.status_message = format!("读取导入文件失败: {}", e),
+                }
+            } else {
+                app_state.status_message = "未选择导入文件。".into();
+            }
+            Command::none()
         }
     }
 }

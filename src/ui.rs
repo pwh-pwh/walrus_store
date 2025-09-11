@@ -137,6 +137,15 @@ pub fn view_application<'a>(
     .width(Length::Fill);
 
     // 状态栏
+    // 导入/导出配置区域
+    let config_management_area = row![
+        button("导入配置").on_press(Message::TriggerImportConfig),
+        button("导出配置").on_press(Message::TriggerExportConfig),
+    ]
+    .spacing(10)
+    .padding(10)
+    .width(Length::Fill);
+
     let status_bar = container(
         text(status_message)
             .size(16)
@@ -156,6 +165,8 @@ pub fn view_application<'a>(
         Space::with_height(Length::Fixed(20.0)),
         batch_actions_area, // 添加批量操作区域
         download_area,
+        Space::with_height(Length::Fixed(20.0)),
+        config_management_area, // 添加配置管理区域
         status_bar,
     ]
     .width(Length::Fill)

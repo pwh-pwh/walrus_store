@@ -20,7 +20,7 @@ pub fn get_data_dir() -> PathBuf {
     }
 }
 
-fn get_files_json_path() -> PathBuf {
+pub fn get_files_json_path() -> PathBuf {
     get_data_dir().join("files.json")
 }
 

@@ -51,6 +51,10 @@ pub enum Message {
     DownloadFromInputButtonPressed,
     TriggerDownloadSelectionFromInput(String), // 用于从输入框下载时选择路径
     DownloadLocationSelectedFromInput(Option<PathBuf>, String), // 从输入框下载后选择路径
+    TriggerExportConfig, // 触发导出配置文件
+    ExportConfigSelected(Option<PathBuf>), // 导出配置文件路径选择完成
+    TriggerImportConfig, // 触发导入配置文件
+    ImportConfigSelected(Option<PathBuf>), // 导入配置文件路径选择完成
     UploadProgress(f32),
     UploadComplete(Result<FileEntry, String>),
     DownloadComplete(Result<String, String>),
