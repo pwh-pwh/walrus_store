@@ -40,7 +40,7 @@ const CYBER_GREY: Color = Color::from_rgb(
 
 
 pub fn view_application<'a>(
-    files: &'a Vec<FileEntry>,
+    files: &'a [FileEntry],
     upload_file_path: &'a str,
     upload_progress: f32,
     download_id_input: &'a str,
@@ -489,7 +489,6 @@ impl iced::widget::text_input::StyleSheet for CyberTextInputStyle {
                 ..self.active(_style).border
             },
             icon_color: Color::from_rgb(0.3, 0.3, 0.3),
-            ..self.active(_style)
         }
     }
 }

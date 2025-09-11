@@ -105,7 +105,6 @@ impl Application for WalrusStore {
             &self.search_input, // 添加 search_input 参数
             &self.selected_files, // 新增，传递 selected_files
         )
-        .into()
     }
 
     fn theme(&self) -> Theme {
@@ -115,7 +114,9 @@ impl Application for WalrusStore {
 
 pub fn main() -> iced::Result {
     get_data_dir();
-    let mut config = Settings::default();
-    config.default_font = Font::with_name("微软雅黑");
+    let config = Settings {
+        default_font: Font::with_name("微软雅黑"),
+        ..Default::default()
+    };
     WalrusStore::run(config)
 }

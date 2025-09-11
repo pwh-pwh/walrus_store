@@ -19,7 +19,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
         Message::TriggerFileSelection => Command::perform(
             async {
                 let initial_directory = UserDirs::new()
-                    .and_then(|user_dirs| Some(user_dirs.home_dir().to_path_buf()))
+                  .map(|user_dirs| user_dirs.home_dir().to_path_buf())
                     .unwrap_or_else(|| PathBuf::from("."));
 
                 let pick_result = AsyncFileDialog::new()
@@ -67,7 +67,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
         Message::DownloadButtonPressed(id) => {
             Command::perform(
                 async move { id },
-                |id| Message::TriggerDownloadSelection(id),
+                Message::TriggerDownloadSelection,
             )
         }
         Message::TriggerDownloadSelection(id) => Command::perform(
@@ -92,7 +92,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                     let walrus_api = WalrusApi::default(); // 创建 WalrusApi 实例
                     Command::perform(
                         async move { walrus_api.download_file(entry.id.clone(), entry.name.clone(), download_path).await },
-                        |result| Message::DownloadComplete(result),
+                        Message::DownloadComplete,
                     )
                 } else {
                     app_state.status_message = format!("找不到文件 ID: {}", id);
@@ -128,7 +128,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             // 触发文件选择对话框，并将下载ID传递给后续处理
             Command::perform(
                 async move { id_to_download },
-                |id| Message::TriggerDownloadSelectionFromInput(id),
+                Message::TriggerDownloadSelectionFromInput,
             )
         }
         Message::TriggerDownloadSelectionFromInput(id) => Command::perform(
@@ -163,7 +163,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                 let walrus_api = WalrusApi::default();
                 Command::perform(
                     async move { walrus_api.download_file(id_to_download.clone(), file_name, download_path).await },
-                    |result| Message::DownloadComplete(result),
+                    Message::DownloadComplete,
                 )
             } else {
                 app_state.status_message = "未选择下载路径。".into();
@@ -288,7 +288,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
                         let download_path_clone = download_path.clone();
                         commands.push(Command::perform(
                             async move { walrus_api.download_file(entry.id.clone(), entry.name.clone(), download_path_clone).await },
-                            |result| Message::DownloadComplete(result),
+                            Message::DownloadComplete,
                         ));
                     } else {
                         app_state.status_message = format!("找不到文件 ID: {}", id);
@@ -405,7 +405,7 @@ pub fn handle_message(app_state: &mut WalrusStore, message: Message) -> Command<
             let walrus_api = WalrusApi::default();
             Command::perform(
                 async move { walrus_api.download_config_by_id(id_to_load).await },
-                |result| Message::ConfigLoaded(result),
+                Message::ConfigLoaded,
             )
         }
         Message::ConfigLoaded(result) => {

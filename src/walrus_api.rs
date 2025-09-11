@@ -2,8 +2,8 @@ use std::{fs, path::PathBuf};
 
 use walrus_rs::WalrusClient;
 
-const AGG_URL: &'static str = "https://aggregator.testnet.walrus.atalma.io";
-const PUB_URL: &'static str = "https://publisher.walrus-01.tududes.com";
+const AGG_URL: &str = "https://aggregator.testnet.walrus.atalma.io";
+const PUB_URL: &str = "https://publisher.walrus-01.tududes.com";
 
 pub struct WalrusApi {
     client: WalrusClient,
