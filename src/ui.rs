@@ -1,10 +1,34 @@
 use crate::Message;
 use crate::data::FileEntry;
-use iced::widget::{button, column, container, row, scrollable, text, text_input};
-use iced::{Element, Length, Color}; // Add Color
+use iced::widget::{button, column, container, row, scrollable, text, text_input}; // 移除 checkbox 导入
+use iced::{Element, Length, Color};
 
 const SPACING: u16 = 10;
 const PADDING: u16 = 10;
+
+// Hacker theme colors (using a slightly desaturated green for better contrast on dark)
+// const HACKER_BACKGROUND: Color = Color::from_rgb( // 移除 HACKER_BACKGROUND
+//     0x0A as f32 / 255.0,
+//     0x0A as f32 / 255.0,
+//     0x0A as f32 / 255.0,
+// ); // Darkest grey
+const HACKER_FOREGROUND: Color = Color::from_rgb(
+    0x00 as f32 / 255.0,
+    0xE6 as f32 / 255.0,
+    0x00 as f32 / 255.0,
+); // Green
+const HACKER_ACCENT: Color = Color::from_rgb(
+    0x00 as f32 / 255.0,
+    0xA0 as f32 / 255.0,
+    0xA0 as f32 / 255.0,
+); // Cyan
+// const HACKER_RED: Color = Color::from_rgb(0xFF as f32 / 255.0, 0x33 as f32 / 255.0, 0x33 as f32 / 255.0); // Red for destructive actions // 移除 HACKER_RED
+// const HACKER_GREY: Color = Color::from_rgb( // 移除 HACKER_GREY
+//     0x33 as f32 / 255.0,
+//     0x33 as f32 / 255.0,
+//     0x33 as f32 / 255.0,
+// ); // Dark grey for secondary elements
+
 
 pub fn view_application<'a>(
     files: &'a Vec<FileEntry>,
@@ -20,12 +44,12 @@ pub fn view_application<'a>(
             .size(30)
             .horizontal_alignment(iced::alignment::Horizontal::Center)
             .vertical_alignment(iced::alignment::Vertical::Center)
-            .style(iced::theme::Text::Color(Color::WHITE)), // 设置文本颜色为白色
+            .style(iced::theme::Text::Color(HACKER_FOREGROUND)), // 设置文本颜色为绿色
     )
     .width(Length::Fill)
     .padding(PADDING)
     .center_y()
-    .style(iced::theme::Container::Box); // 使用 Box 样式，它通常有背景色
+    .style(iced::theme::Container::Box); // 使用 Box 样式，它在 Dark 主题下会有深色背景
 
     // 上传区域
     let upload_area = container(
@@ -33,23 +57,25 @@ pub fn view_application<'a>(
             row![
                 button("选择文件")
                     .on_press(Message::TriggerFileSelection)
-                    .style(iced::theme::Button::Positive), // 使用 Positive 样式
+                    .style(iced::theme::Button::Primary), // 使用 Primary 样式，它在 Dark 主题下有深色背景
                 text_input("文件路径", upload_file_path)
                     .on_input(|_| Message::NoOp) // 只读
-                    .width(Length::FillPortion(2)),
+                    .width(Length::FillPortion(2))
+                    .style(iced::theme::TextInput::Default), // 使用默认样式
             ]
             .spacing(SPACING),
             button("上传文件")
                 .on_press(Message::UploadButtonPressed)
                 .style(iced::theme::Button::Primary), // 使用 Primary 样式
             // 进度条 (占位符)
-            text(format!("上传进度: {:.0}%", upload_progress * 100.0)),
+            text(format!("上传进度: {:.0}%", upload_progress * 100.0))
+                .style(iced::theme::Text::Color(HACKER_FOREGROUND)), // 进度文本颜色
         ]
         .spacing(SPACING)
         .padding(PADDING)
         .width(Length::Fill),
     )
-    .style(iced::theme::Container::Box) // 添加边框和背景
+    .style(iced::theme::Container::Box) // 使用 Box 样式，适应 Dark 主题
     .padding(PADDING)
     .width(Length::Fill);
 
@@ -58,16 +84,16 @@ pub fn view_application<'a>(
         .on_input(Message::SearchInputChanged)
         .padding(PADDING)
         .width(Length::Fill)
-        .style(iced::theme::TextInput::Default); // 使用默认样式，通常包含边框
+        .style(iced::theme::TextInput::Default); // 使用默认样式，文本颜色将由全局主题控制
 
     // 文件列表区域
     let file_list_header = container(
         row![
             text("").width(Length::Fixed(20.0)), // 复选框的占位
-            text("文件名").width(Length::FillPortion(3)),
-            text("文件 ID").width(Length::FillPortion(2)),
-            text("上传时间").width(Length::FillPortion(2)),
-            text("操作").width(Length::FillPortion(2)),
+            text("文件名").width(Length::FillPortion(3)).style(iced::theme::Text::Color(HACKER_ACCENT)),
+            text("文件 ID").width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_ACCENT)),
+            text("上传时间").width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_ACCENT)),
+            text("操作").width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_ACCENT)),
         ]
         .spacing(SPACING)
         .padding(PADDING)
@@ -99,14 +125,14 @@ pub fn view_application<'a>(
                 selected_files.contains(&file_id_clone), // is_checked
             )
             .on_toggle(move |is_checked| Message::FileSelectedForBatch(file_id_clone.clone(), is_checked)) // 链式调用 on_toggle
-            .width(Length::Fixed(20.0));
+            .width(Length::Fixed(20.0)); // 不设置自定义样式，让其继承全局 Dark 主题的默认外观
 
             container(
                 row![
                     checkbox,
-                    text(file_name_clone).width(Length::FillPortion(3)),
-                    text(display_id_clone).width(Length::FillPortion(2)),
-                    text(uploaded_at_clone).width(Length::FillPortion(2)),
+                    text(file_name_clone).width(Length::FillPortion(3)).style(iced::theme::Text::Color(HACKER_FOREGROUND)),
+                    text(display_id_clone).width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_FOREGROUND)),
+                    text(uploaded_at_clone).width(Length::FillPortion(2)).style(iced::theme::Text::Color(HACKER_FOREGROUND)),
                     row![
                         button("复制 ID")
                             .on_press(Message::CopyIdToClipboard(file_ref.id.clone()))
@@ -124,7 +150,7 @@ pub fn view_application<'a>(
                 .spacing(SPACING)
                 .padding(PADDING),
             )
-            .style(iced::theme::Container::Box) // 添加背景和边框
+            .style(iced::theme::Container::Box) // 使用 Box 样式，适应 Dark 主题
             .into()
         })
         .collect();
@@ -198,7 +224,7 @@ pub fn view_application<'a>(
             .size(16)
             .horizontal_alignment(iced::alignment::Horizontal::Center)
             .vertical_alignment(iced::alignment::Vertical::Center)
-            .style(iced::theme::Text::Color(Color::BLACK)), // 设置文本颜色
+            .style(iced::theme::Text::Color(HACKER_FOREGROUND)), // 设置文本颜色
     )
     .width(Length::Fill)
     .padding(PADDING)

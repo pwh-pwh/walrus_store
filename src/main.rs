@@ -101,6 +101,11 @@ impl Application for WalrusStore {
             &self.search_input, // 添加 search_input 参数
             &self.selected_files, // 新增，传递 selected_files
         )
+        .into()
+    }
+
+    fn theme(&self) -> Theme {
+        Theme::Dark // 返回 Dark 主题
     }
 }
 
