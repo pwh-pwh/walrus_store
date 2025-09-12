@@ -1,5 +1,7 @@
 #![windows_subsystem = "windows"]
 
+use iced::window;
+use iced::window::icon;
 use iced::{Application, Command, Element, Font, Settings, Theme};
 use std::collections::HashSet;
 
@@ -113,9 +115,17 @@ impl Application for WalrusStore {
 }
 
 pub fn main() -> iced::Result {
+    let bytes = include_bytes!("../assets/icon.png");
+    let image = image::load_from_memory(bytes).unwrap().to_rgba8();
+    let (width, height) = image.dimensions();
+    let icon = icon::from_rgba(image.into_raw(), width, height).unwrap();
     get_data_dir();
     let config = Settings {
         default_font: Font::with_name("微软雅黑"),
+        window: window::Settings {
+            icon: Some(icon),
+            ..window::Settings::default()
+        },
         ..Default::default()
     };
     WalrusStore::run(config)
