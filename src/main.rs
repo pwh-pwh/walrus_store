@@ -120,8 +120,14 @@ pub fn main() -> iced::Result {
     let (width, height) = image.dimensions();
     let icon = icon::from_rgba(image.into_raw(), width, height).unwrap();
     get_data_dir();
+    #[cfg(target_os = "windows")]
+    let font = Font::with_name("微软雅黑");
+    #[cfg(target_os = "macos")]
+    let font = Font::with_name("PingFang SC");
+    #[cfg(target_os = "linux")]
+    let font =  Font::with_name("Roboto");
     let config = Settings {
-        default_font: Font::with_name("微软雅黑"),
+        default_font: font,
         window: window::Settings {
             icon: Some(icon),
             ..window::Settings::default()
