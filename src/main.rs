@@ -5,10 +5,10 @@ use iced::window::icon;
 use iced::{Application, Command, Element, Font, Settings, Theme};
 use std::collections::HashSet;
 
-mod app_logic; // Add this line
+mod app_logic;
 mod data;
 mod file_management;
-// mod mock_api; // 注释掉或删除，因为我们将使用 walrus_api
+
 mod ui;
 mod walrus_api;
 
